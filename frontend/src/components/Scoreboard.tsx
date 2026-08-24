@@ -1,0 +1,160 @@
+import type { X01GameState, CricketGameState, GameState, X01Player, CricketPlayer } from '../lib/types';
+import { CRICKET_NUMBERS } from '../lib/types';
+
+interface ScoreboardProps {
+  state: GameState;
+  lastDarts?: Record<string, string | null>;
+}
+
+function lastThrowDisplay(player: X01Player | CricketPlayer, lastDart?: string | null): string | null {
+  if (lastDart) return lastDart;
+  const hist = (player as X01Player).history;
+  if (hist && hist.length > 0) return hist[hist.length - 1].label;
+  const turn = player.turn_darts;
+  if (turn && turn.length > 0) return turn[turn.length - 1].label;
+  return null;
+}
+
+function X01Scoreboard({ state, lastDarts }: { state: X01GameState; lastDarts?: Record<string, string | null> }) {
+  const currentPlayerIdx = state.current_player;
+
+  return (
+    <div className="space-y-3">
+      <div className="text-center text-sm text-slate-400">
+        Round {state.round} &middot; {state.starting_score} game
+      </div>
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${state.players.length}, 1fr)` }}>
+        {state.players.map((p, i) => (
+          <div
+            key={p.id}
+            className={`rounded-lg p-3 text-center transition ${
+              i === currentPlayerIdx
+                ? 'bg-slate-700 ring-2 ring-emerald-500'
+                : 'bg-slate-800'
+            }`}
+          >
+            <div className="font-bold text-sm truncate">{p.name}</div>
+            <div className="text-3xl font-mono font-bold mt-1">{p.score}</div>
+            <div className="text-xs text-slate-400 mt-0.5">{p.is_bot ? 'Bot' : 'Player'}</div>
+            {p.turn_darts && p.turn_darts.length > 0 && (
+              <div className="text-xs text-emerald-400 mt-1">
+                Turn: {p.turn_score} ({p.darts_used}/3 darts)
+              </div>
+            )}
+            {p.turn_darts && p.turn_darts.length > 0 && (
+              <div className="flex gap-1 justify-center mt-1">
+                {p.turn_darts.map((d, di) => (
+                  <span key={di} className="text-xs bg-slate-600 px-1.5 py-0.5 rounded">
+                    {d.label} ({d.score})
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="text-xs text-slate-500 mt-2 h-4">
+              {lastThrowDisplay(p, lastDarts?.[p.id]) && (
+                <span>Last: <span className="text-white font-mono">{lastThrowDisplay(p, lastDarts?.[p.id])}</span></span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function marksDisplay(marks: number): string {
+  if (marks >= 3) return 'X';
+  if (marks === 2) return 'O';
+  if (marks === 1) return '/';
+  return '-';
+}
+
+function CricketScoreboard({ state, lastDarts }: { state: CricketGameState; lastDarts?: Record<string, string | null> }) {
+  const currentPlayerIdx = state.current_player;
+
+  const playerMPR = state.players.map(p => {
+    const totalMarks = CRICKET_NUMBERS.reduce((sum, n) => sum + ((p.marks || {})[n] || 0), 0);
+    const rounds = Math.max(1, state.round - 1);
+    return totalMarks / rounds;
+  });
+
+  return (
+    <div className="space-y-3">
+      <div className="text-center text-sm text-slate-400">
+        Round {state.round} &middot; Cricket
+      </div>
+
+      <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${state.players.length}, 1fr)` }}>
+        {state.players.map((p, i) => (
+          <div
+            key={p.id}
+            className={`rounded-lg p-3 text-center transition ${
+              i === currentPlayerIdx
+                ? 'bg-slate-700 ring-2 ring-emerald-500'
+                : 'bg-slate-800'
+            }`}
+          >
+            <div className="font-bold text-sm truncate">{p.name}</div>
+            <div className="text-3xl font-mono font-bold mt-1">{p.score}</div>
+            <div className="text-xs text-slate-400 mt-1">MPR: <span className="font-mono text-slate-300">{playerMPR[i].toFixed(2)}</span></div>
+            <div className="text-xs text-slate-400">{p.is_bot ? 'Bot' : 'Player'}</div>
+            <div className="text-xs text-slate-500 mt-2 h-4">
+              {lastThrowDisplay(p, lastDarts?.[p.id]) && (
+                <span>Last: <span className="text-white font-mono">{lastThrowDisplay(p, lastDarts?.[p.id])}</span></span>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-slate-800 rounded-xl p-2 overflow-y-auto">
+        <table className="text-sm border-separate border-spacing-0 h-full w-full">
+          <thead>
+            <tr>
+              <th className="px-4 py-2 text-left text-slate-400 sticky left-0 bg-slate-900 z-10">Number</th>
+              {state.players.map((p, i) => (
+                <th key={p.id} className={`px-4 py-2 text-center font-bold ${i === currentPlayerIdx ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {p.name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="h-full">
+            {CRICKET_NUMBERS.map(n => {
+              const allClosed = state.players.every(p => ((p.marks || {})[n] || 0) >= 3);
+              return (
+                <tr key={n} className={`h-full ${allClosed ? 'opacity-40' : ''}`}>
+                  <td className={`px-4 py-3 font-bold text-lg sticky left-0 bg-slate-900 z-10 ${allClosed ? 'line-through text-slate-500' : 'text-slate-300'}`}>
+                    {n === 25 ? 'Bull' : n}
+                  </td>
+                  {state.players.map((p, pi) => {
+                    const marks = ((p.marks || {})[n] || 0);
+                    const closed = marks >= 3;
+                    return (
+                      <td key={p.id} className={`px-4 py-3 text-center font-mono font-bold text-xl ${
+                        closed
+                          ? 'text-red-400 line-through'
+                          : marks > 0
+                          ? 'text-yellow-400'
+                          : 'text-slate-600'
+                      } ${pi === currentPlayerIdx ? 'bg-slate-700/50' : ''}`}>
+                        {marksDisplay(marks)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+export default function Scoreboard({ state, lastDarts }: ScoreboardProps) {
+  if (state.type === 'x01') {
+    return <X01Scoreboard state={state as X01GameState} lastDarts={lastDarts} />;
+  }
+  return <CricketScoreboard state={state as CricketGameState} lastDarts={lastDarts} />;
+}

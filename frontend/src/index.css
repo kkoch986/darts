@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+:root {
+  --dart-red: #c41e3a;
+  --dart-green: #006400;
+  --dart-black: #1a1a1a;
+  --dart-white: #f5f5dc;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+@keyframes flash {
+  0% { opacity: 0.8; r: 15; }
+  100% { opacity: 0; r: 30; }
+}
+
+.animate-flash {
+  animation: flash 0.3s ease-out forwards;
+}
