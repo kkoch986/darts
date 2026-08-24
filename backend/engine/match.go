@@ -132,10 +132,15 @@ func (m *MatchState) RecordLegWin(winnerID string) bool {
 	}
 
 	var gameID string
-	if x01, _, ok := m.CurrentGame(); ok {
-		gameID = x01.ID
-	} else if _, cricket, ok := m.CurrentGame(); ok {
-		gameID = cricket.ID
+	switch g := m.CurrentGameState.(type) {
+	case *X01GameState:
+		if g != nil {
+			gameID = g.ID
+		}
+	case *CricketGameState:
+		if g != nil {
+			gameID = g.ID
+		}
 	}
 
 	m.LegHistory = append(m.LegHistory, MatchLegResult{
