@@ -1,5 +1,21 @@
 export type GameType = 'x01' | 'cricket';
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'professional';
+export type Persona = 'rookie' | 'jester' | 'steady' | 'finisher' | 'bully' | 'sniper';
+
+export interface PersonaInfo {
+  id: Persona;
+  label: string;
+  rank: number;
+  description: string;
+}
+
+export const PERSONAS: PersonaInfo[] = [
+  { id: 'rookie', label: 'Rookie', rank: 1, description: 'Safe singles, low accuracy' },
+  { id: 'jester', label: 'Jester', rank: 1, description: 'Wild targets, high variance' },
+  { id: 'steady', label: 'Steady', rank: 2, description: 'Balanced, closes methodically' },
+  { id: 'finisher', label: 'Finisher', rank: 3, description: 'Strong checkout game' },
+  { id: 'bully', label: 'Bully', rank: 4, description: 'Aggressive triples, closes fast' },
+  { id: 'sniper', label: 'Sniper', rank: 5, description: 'T20 focused, pinpoint accuracy' },
+];
 
 export interface Segment {
   type: 0 | 1 | 2 | 3 | 4; // single=0, double=1, triple=2, outer_bull=3, bullseye=4
@@ -12,7 +28,7 @@ export interface X01Player {
   id: string;
   name: string;
   is_bot: boolean;
-  difficulty?: string;
+  difficulty?: Persona;
   score: number;
   score_at_turn_start: number;
   darts_used: number;
@@ -27,7 +43,7 @@ export interface CricketPlayer {
   id: string;
   name: string;
   is_bot: boolean;
-  difficulty?: string;
+  difficulty?: Persona;
   marks: Record<number, number>;
   score: number;
   darts_used: number;
@@ -75,7 +91,7 @@ export interface MatchPlayer {
   id: string;
   name: string;
   is_bot: boolean;
-  difficulty?: string;
+  difficulty?: Persona;
 }
 
 export interface MatchLegResult {

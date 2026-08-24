@@ -6,19 +6,65 @@ import (
 	"math/rand"
 )
 
-type Difficulty string
+type Persona string
 
 const (
-	Easy         Difficulty = "easy"
-	Medium       Difficulty = "medium"
-	Hard         Difficulty = "hard"
-	Professional Difficulty = "professional"
+	PersonaRookie       Persona = "rookie"
+	PersonaJester       Persona = "jester"
+	PersonaSteady       Persona = "steady"
+	PersonaFinisher     Persona = "finisher"
+	PersonaBully        Persona = "bully"
+	PersonaSniper       Persona = "sniper"
+	PersonaEasy         Persona = "easy"
+	PersonaMedium       Persona = "medium"
+	PersonaHard         Persona = "hard"
+	PersonaProfessional Persona = "professional"
 )
 
+type personaMeta struct {
+	display string
+	rank    int
+	sigma   float64
+}
+
+var personaRegistry = map[Persona]personaMeta{
+	PersonaRookie:       {display: "Rookie", rank: 1, sigma: 50},
+	PersonaJester:       {display: "Jester", rank: 1, sigma: 45},
+	PersonaSteady:       {display: "Steady", rank: 2, sigma: 30},
+	PersonaFinisher:     {display: "Finisher", rank: 3, sigma: 15},
+	PersonaBully:        {display: "Bully", rank: 4, sigma: 15},
+	PersonaSniper:       {display: "Sniper", rank: 5, sigma: 10},
+	PersonaEasy:         {display: "Easy", rank: 1, sigma: 50},
+	PersonaMedium:       {display: "Medium", rank: 2, sigma: 30},
+	PersonaHard:         {display: "Hard", rank: 3, sigma: 15},
+	PersonaProfessional: {display: "Professional", rank: 5, sigma: 10},
+}
+
+func PersonaRank(p Persona) int {
+	if m, ok := personaRegistry[p]; ok {
+		return m.rank
+	}
+	return personaRegistry[PersonaRookie].rank
+}
+
+func PersonaDisplay(p Persona) string {
+	if m, ok := personaRegistry[p]; ok {
+		return m.display
+	}
+	return string(p)
+}
+
+func NormalizePersona(p Persona) Persona {
+	if _, ok := personaRegistry[p]; ok {
+		return p
+	}
+	return PersonaRookie
+}
+
 type Opponent struct {
-	Name       string     `json:"name"`
-	Difficulty Difficulty `json:"difficulty"`
-	RNG        *rand.Rand
+	Name    string  `json:"name"`
+	Persona Persona `json:"persona"`
+	RNG     *rand.Rand
 }
 
 type BotResult struct {
@@ -26,11 +72,12 @@ type BotResult struct {
 	AimLabel string
 }
 
-func NewOpponent(name string, diff Difficulty) *Opponent {
+func NewOpponent(name string, p Persona) *Opponent {
+	p = NormalizePersona(p)
 	return &Opponent{
-		Name:       name,
-		Difficulty: diff,
-		RNG:        rand.New(rand.NewSource(rand.Int63())),
+		Name:    name,
+		Persona: p,
+		RNG:     rand.New(rand.NewSource(rand.Int63())),
 	}
 }
 
@@ -115,52 +162,53 @@ func (o *Opponent) deviate(aim Segment) Segment {
 }
 
 func (o *Opponent) deviationSigma() float64 {
-	switch o.Difficulty {
-	case Easy:
-		return 50
-	case Medium:
-		return 30
-	case Hard:
-		return 15
-	case Professional:
-		return 10
+	if m, ok := personaRegistry[o.Persona]; ok {
+		return m.sigma
 	}
-	return 50
+	return personaRegistry[PersonaRookie].sigma
 }
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 
 func (o *Opponent) ThrowX01(remaining int) BotResult {
-	switch o.Difficulty {
-	case Easy:
-		return o.x01Easy(remaining)
-	case Medium:
-		return o.x01Medium(remaining)
-	case Hard:
-		return o.x01Hard(remaining)
-	case Professional:
-		return o.x01Professional(remaining)
+	switch o.Persona {
+	case PersonaRookie, PersonaEasy:
+		return o.x01Rookie(remaining)
+	case PersonaJester:
+		return o.x01Jester(remaining)
+	case PersonaSteady, PersonaMedium:
+		return o.x01Steady(remaining)
+	case PersonaFinisher, PersonaHard:
+		return o.x01Finisher(remaining)
+	case PersonaBully:
+		return o.x01Bully(remaining)
+	case PersonaSniper, PersonaProfessional:
+		return o.x01Sniper(remaining)
 	}
-	return o.x01Easy(remaining)
+	return o.x01Rookie(remaining)
 }
 
 func (o *Opponent) ThrowCricket(openTargets []int, ownMarks map[int]int, oppMarks []map[int]int, ownScore int, oppScores []int) BotResult {
-	switch o.Difficulty {
-	case Easy:
-		return o.cricketEasy()
-	case Medium:
-		return o.cricketMedium(openTargets, ownMarks, ownScore, oppScores)
-	case Hard:
-		return o.cricketHard(openTargets, ownMarks, ownScore, oppScores)
-	case Professional:
-		return o.cricketProfessional(openTargets, ownMarks, oppMarks, ownScore, oppScores)
+	switch o.Persona {
+	case PersonaRookie, PersonaEasy:
+		return o.cricketRookie()
+	case PersonaJester:
+		return o.cricketJester()
+	case PersonaSteady, PersonaMedium:
+		return o.cricketSteady(openTargets, ownMarks, ownScore, oppScores)
+	case PersonaFinisher, PersonaHard:
+		return o.cricketFinisher(openTargets, ownMarks, ownScore, oppScores)
+	case PersonaBully:
+		return o.cricketBully(openTargets, ownMarks, oppMarks, ownScore, oppScores)
+	case PersonaSniper, PersonaProfessional:
+		return o.cricketSniper(openTargets, ownMarks, oppMarks, ownScore, oppScores)
 	}
-	return o.cricketEasy()
+	return o.cricketRookie()
 }
 
 // ─── X01 Aiming Strategies ─────────────────────────────────────────────────────
 
-func (o *Opponent) x01Easy(remaining int) BotResult {
+func (o *Opponent) x01Rookie(remaining int) BotResult {
 	var aim Segment
 	if remaining <= 40 && remaining%2 == 0 && o.RNG.Float64() < 0.25 {
 		val := remaining / 2
@@ -172,7 +220,7 @@ func (o *Opponent) x01Easy(remaining int) BotResult {
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
 
-func (o *Opponent) x01Medium(remaining int) BotResult {
+func (o *Opponent) x01Steady(remaining int) BotResult {
 	var aim Segment
 	if remaining <= 50 && remaining%2 == 0 && o.RNG.Float64() < 0.5 {
 		val := remaining / 2
@@ -190,7 +238,7 @@ func (o *Opponent) x01Medium(remaining int) BotResult {
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
 
-func (o *Opponent) x01Hard(remaining int) BotResult {
+func (o *Opponent) x01Finisher(remaining int) BotResult {
 	var aim Segment
 	if remaining <= 50 {
 		if checkout, ok := smartCheckout(remaining); ok && o.RNG.Float64() < 0.7 {
@@ -209,7 +257,7 @@ func (o *Opponent) x01Hard(remaining int) BotResult {
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
 
-func (o *Opponent) x01Professional(remaining int) BotResult {
+func (o *Opponent) x01Sniper(remaining int) BotResult {
 	var aim Segment
 	if remaining <= 50 {
 		if checkout, ok := smartCheckout(remaining); ok && o.RNG.Float64() < 0.85 {
@@ -228,9 +276,40 @@ func (o *Opponent) x01Professional(remaining int) BotResult {
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
 
+func (o *Opponent) x01Jester(remaining int) BotResult {
+	var aim Segment
+	r := o.RNG.Float64()
+	switch {
+	case r < 0.5:
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+	case r < 0.8:
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Double, Value: val, Multiplier: 2}
+	default:
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Single, Value: val, Multiplier: 1}
+	}
+	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
+}
+
+func (o *Opponent) x01Bully(remaining int) BotResult {
+	var aim Segment
+	if remaining <= 50 {
+		if checkout, ok := smartCheckout(remaining); ok && o.RNG.Float64() < 0.6 {
+			aim = checkout
+		}
+	}
+	if aim.Value == 0 {
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+	}
+	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
+}
+
 // ─── Cricket Aiming Strategies ─────────────────────────────────────────────────
 
-func (o *Opponent) cricketEasy() BotResult {
+func (o *Opponent) cricketRookie() BotResult {
 	var aim Segment
 	if o.RNG.Float64() < 0.4 {
 		val := CricketNumbers[o.RNG.Intn(len(CricketNumbers))]
@@ -251,7 +330,7 @@ func isAhead(ownScore int, oppScores []int) bool {
 	return true
 }
 
-func (o *Opponent) cricketMedium(openTargets []int, ownMarks map[int]int, ownScore int, oppScores []int) BotResult {
+func (o *Opponent) cricketSteady(openTargets []int, ownMarks map[int]int, ownScore int, oppScores []int) BotResult {
 	var ownUnclosed []int
 	for _, n := range CricketNumbers {
 		if ownMarks[n] < 3 {
@@ -276,7 +355,7 @@ func (o *Opponent) cricketMedium(openTargets []int, ownMarks map[int]int, ownSco
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
 
-func (o *Opponent) cricketHard(openTargets []int, ownMarks map[int]int, ownScore int, oppScores []int) BotResult {
+func (o *Opponent) cricketFinisher(openTargets []int, ownMarks map[int]int, ownScore int, oppScores []int) BotResult {
 	var aim Segment
 	if target := leastMarksTarget(CricketNumbers, ownMarks); target != -1 {
 		if !isAhead(ownScore, oppScores) && len(openTargets) > 0 && o.RNG.Float64() < 0.35 {
@@ -306,7 +385,7 @@ func leastMarksTarget(candidates []int, ownMarks map[int]int) int {
 	return leastClosed
 }
 
-func (o *Opponent) cricketProfessional(openTargets []int, ownMarks map[int]int, oppMarks []map[int]int, ownScore int, oppScores []int) BotResult {
+func (o *Opponent) cricketSniper(openTargets []int, ownMarks map[int]int, oppMarks []map[int]int, ownScore int, oppScores []int) BotResult {
 	ahead := isAhead(ownScore, oppScores)
 	bestTarget := -1
 	bestScore := 0
@@ -337,6 +416,36 @@ func (o *Opponent) cricketProfessional(openTargets []int, ownMarks map[int]int, 
 		aim = Segment{Type: Triple, Value: boardOrder[o.RNG.Intn(20)], Multiplier: 3}
 	}
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
+}
+
+func (o *Opponent) cricketJester() BotResult {
+	var aim Segment
+	r := o.RNG.Float64()
+	switch {
+	case r < 0.4:
+		val := CricketNumbers[o.RNG.Intn(len(CricketNumbers))]
+		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+	case r < 0.7:
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+	default:
+		val := boardOrder[o.RNG.Intn(20)]
+		aim = Segment{Type: Single, Value: val, Multiplier: 1}
+	}
+	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
+}
+
+func (o *Opponent) cricketBully(openTargets []int, ownMarks map[int]int, oppMarks []map[int]int, ownScore int, oppScores []int) BotResult {
+	// Mix of finisher-style closing and sniper-style opponent blocking.
+	target := leastMarksTarget(CricketNumbers, ownMarks)
+	if target == -1 && len(openTargets) > 0 {
+		target = openTargets[o.RNG.Intn(len(openTargets))]
+	}
+	if target != -1 {
+		return BotResult{Segment: o.deviate(o.cricketAimFor(target)), AimLabel: SegmentLabel(o.cricketAimFor(target))}
+	}
+	val := boardOrder[o.RNG.Intn(20)]
+	return BotResult{Segment: o.deviate(Segment{Type: Triple, Value: val, Multiplier: 3}), AimLabel: SegmentLabel(Segment{Type: Triple, Value: val, Multiplier: 3})}
 }
 
 func (o *Opponent) cricketAimFor(val int) Segment {

@@ -9,9 +9,9 @@ import (
 )
 
 func main() {
-	gameType := flag.String("game", "cricket", "game type: x01 or cricket")
-	p1Diff := flag.String("p1", "easy", "player 1 difficulty")
-	p2Diff := flag.String("p2", "professional", "player 2 difficulty")
+	gameType := flag.String("game", "x01", "game type: x01 or cricket")
+	p1Diff := flag.String("p1", "rookie", "player 1 persona")
+	p2Diff := flag.String("p2", "sniper", "player 2 persona")
 	games := flag.Int("n", 1000, "number of games to simulate")
 	startScore := flag.Int("score", 501, "starting score for x01")
 	flag.Parse()
@@ -192,7 +192,7 @@ func simCricket(rng *rand.Rand, p1Diff, p2Diff string) (winner, p1Darts, p2Darts
 }
 
 func makeOpp(rng *rand.Rand, name, diff string) *engine.Opponent {
-	opp := engine.NewOpponent(name, engine.Difficulty(diff))
+	opp := engine.NewOpponent(name, engine.Persona(diff))
 	opp.RNG = rng
 	return opp
 }

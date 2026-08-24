@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createMatch, listPlayers, createPlayer, listMatches, deleteMatch } from '../lib/api';
-import type { Player, Difficulty } from '../lib/types';
+import { PERSONAS } from '../lib/types';
+import type { Player, Persona } from '../lib/types';
 import type { MatchSummary } from '../lib/api';
 
 function timeAgo(dateStr: string): string {
@@ -24,7 +25,7 @@ export default function Home() {
   const [extraPlayers, setExtraPlayers] = useState<string[]>([]);
   const [newName, setNewName] = useState('');
   const [vsBot, setVsBot] = useState(true);
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [persona, setPersona] = useState<Persona>('finisher');
   const [matchLength, setMatchLength] = useState<1 | 3 | 5 | 7>(1);
   const [firstThrower, setFirstThrower] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -71,10 +72,11 @@ export default function Home() {
       ];
 
       if (vsBot) {
+        const personaLabel = PERSONAS.find(p => p.id === persona)?.label ?? persona;
         playerConfigs.push({
-          name: `Bot (${difficulty})`,
+          name: `Bot (${personaLabel})`,
           is_bot: true,
-          difficulty: difficulty,
+          difficulty: persona,
         });
       } else {
         const p2 = players.find(p => p.id === selectedPlayer2);
@@ -209,20 +211,38 @@ export default function Home() {
             </label>
 
             {vsBot && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                {(['easy', 'medium', 'hard', 'professional'] as Difficulty[]).map(d => (
-                  <button
-                    key={d}
-                    onClick={() => setDifficulty(d)}
-                    className={`py-2 rounded-lg text-sm font-bold capitalize transition ${
-                      difficulty === d
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                    }`}
-                  >
-                    {d}
-                  </button>
-                ))}
+              <div className="mt-3 space-y-2">
+                <label className="block text-xs text-slate-500 uppercase tracking-wider">Bot Persona</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {PERSONAS.slice().sort((a, b) => a.rank - b.rank).map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => setPersona(p.id)}
+                      className={`text-left px-3 py-2 rounded-lg text-sm font-bold transition ${
+                        persona === p.id
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{p.label}</span>
+                        <span className="flex gap-0.5">
+                          {Array.from({ length: 5 }, (_, i) => (
+                            <span
+                              key={i}
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                i < p.rank ? 'bg-current opacity-80' : 'bg-slate-500/40'
+                              }`}
+                            />
+                          ))}
+                        </span>
+                      </div>
+                      <div className={`text-[10px] font-normal ${persona === p.id ? 'text-emerald-100' : 'text-slate-400'}`}>
+                        {p.description}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -334,7 +354,7 @@ export default function Home() {
                 {(() => {
                   const names: string[] = [];
                   if (selectedPlayer || newName.trim()) names.push(players.find(p => p.id === selectedPlayer)?.name || newName.trim() || 'Player 1');
-                  if (vsBot) names.push(`Bot (${difficulty})`);
+                  if (vsBot) names.push(`Bot (${PERSONAS.find(p => p.id === persona)?.label ?? persona})`);
                   else if (selectedPlayer2) names.push(players.find(p => p.id === selectedPlayer2)?.name || 'Player 2');
                   extraPlayers.forEach((epId, i) => {
                     names.push(players.find(p => p.id === epId)?.name || `P${i + 3}`);

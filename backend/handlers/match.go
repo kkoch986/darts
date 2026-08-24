@@ -582,7 +582,7 @@ func recordThrow(match *engine.MatchState, label string, score int) {
 
 func playBotTurnsX01InMatch(match *engine.MatchState, g *engine.X01GameState) []*AiThrowResult {
 	p := g.CurrentTurnPlayer()
-	opp := engine.NewOpponent(p.Name, engine.Difficulty(p.Difficulty))
+	opp := engine.NewOpponent(p.Name, engine.Persona(p.Difficulty))
 	var results []*AiThrowResult
 	for i := 0; i < 3; i++ {
 		if g.IsOver || p.Busted {
@@ -617,7 +617,7 @@ func playBotTurnsX01InMatch(match *engine.MatchState, g *engine.X01GameState) []
 
 func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameState) []*AiThrowResult {
 	p := g.CurrentTurnPlayer()
-	opp := engine.NewOpponent(p.Name, engine.Difficulty(p.Difficulty))
+	opp := engine.NewOpponent(p.Name, engine.Persona(p.Difficulty))
 
 	var openTargets []int
 	for _, n := range engine.CricketNumbers {

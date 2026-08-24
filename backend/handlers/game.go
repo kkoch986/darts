@@ -429,7 +429,7 @@ func EndTurn(w http.ResponseWriter, r *http.Request) {
 
 func playBotTurnsX01(g *engine.X01GameState) []*AiThrowResult {
 	p := g.CurrentTurnPlayer()
-	opp := engine.NewOpponent(p.Name, engine.Difficulty(p.Difficulty))
+	opp := engine.NewOpponent(p.Name, engine.Persona(p.Difficulty))
 	var results []*AiThrowResult
 
 	for i := 0; i < 3; i++ {
@@ -465,7 +465,7 @@ func playBotTurnsX01(g *engine.X01GameState) []*AiThrowResult {
 
 func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 	p := g.CurrentTurnPlayer()
-	opp := engine.NewOpponent(p.Name, engine.Difficulty(p.Difficulty))
+	opp := engine.NewOpponent(p.Name, engine.Persona(p.Difficulty))
 
 	var openTargets []int
 	for _, n := range engine.CricketNumbers {
