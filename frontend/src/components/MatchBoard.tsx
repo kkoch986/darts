@@ -130,26 +130,25 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const needed = Math.floor(match.total_games / 2) + 1;
 
   const matchScoreDisplay = (
-    <div className="bg-slate-800 rounded-xl p-4 space-y-3">
+    <div className="bg-slate-800 rounded-xl p-3 space-y-2">
       <div className="flex items-center justify-between">
-        <div className="text-xs text-slate-400 uppercase tracking-wider">
+        <div className="text-[10px] text-slate-400 uppercase tracking-wider">
           Match — Best of {match.total_games} · Leg {match.current_game_index + 1}
         </div>
-        <div className="text-xs text-slate-500">
+        <div className="text-[10px] text-slate-500">
           First to {needed} legs
         </div>
       </div>
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players.length}, 1fr)` }}>
         {match.players.map(p => (
-          <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-2">
-            <div className="text-sm text-slate-300 truncate">{p.name}</div>
-            <div className="text-2xl font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
-            <div className="text-[10px] text-slate-500">leg wins</div>
+          <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
+            <div className="text-xs text-slate-300 truncate">{p.name}</div>
+            <div className="text-lg font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
           </div>
         ))}
       </div>
       {match.status === 'completed' && (
-        <div className="text-center text-emerald-400 font-bold">
+        <div className="text-center text-emerald-400 font-bold text-xs">
           Match Complete — {match.players.find(p => p.id === match.winner_id)?.name} wins
         </div>
       )}
@@ -242,8 +241,8 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="flex-1 min-w-0 space-y-4">
-          <Scoreboard state={state} lastDarts={lastDarts} />
           {matchScoreDisplay}
+          <Scoreboard state={state} lastDarts={lastDarts} />
           <StrategyAdvisor state={state} />
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
