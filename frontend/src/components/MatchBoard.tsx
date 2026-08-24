@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import type { MatchState, CricketGameState } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
-import { throwInMatch, endTurnInMatch, undoInMatch, type MatchEndTurnResponse } from '../lib/api';
+import { throwInMatch, endTurnInMatch, undoInMatch, getMatchStats, type MatchEndTurnResponse, type MatchStats } from '../lib/api';
 import Dartboard from './Dartboard';
 import SimpleScoring from './SimpleScoring';
 import Scoreboard from './Scoreboard';
@@ -25,7 +25,12 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const [bustInfo, setBustInfo] = useState<string | null>(null);
   const [botThrows, setBotThrows] = useState<MatchEndTurnResponse['ai_turns'] | null>(null);
   const [preBotMatch, setPreBotMatch] = useState<MatchState | null>(null);
+  const [matchStats, setMatchStats] = useState<MatchStats | null>(null);
   const botInProgress = useRef(false);
+
+  useEffect(() => {
+    getMatchStats(matchId).then(setMatchStats).catch(() => {});
+  }, [matchId, match]);
 
   const state = match.current_game_state;
   const currentPlayer = state.players[state.current_player];
@@ -155,6 +160,31 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
     </div>
   );
 
+  const statsPanel = matchStats && (
+    <div className="bg-slate-800 rounded-xl p-3 space-y-2">
+      <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players.length}, 1fr)` }}>
+        {match.players.map(p => (
+          <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
+            <div className="text-xs text-slate-300 truncate">{p.name}</div>
+            {state.type === 'x01' ? (
+              <>
+                <div className="text-xs text-emerald-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
+                <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
+                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-xs text-emerald-400">MPR {matchStats.mpr[p.id]?.toFixed(2) ?? '-'}</div>
+                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+              </>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
   const lastDarts = useMemo(() => {
     const map: Record<string, string | null> = {};
     for (const p of state.players) {
@@ -246,6 +276,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
           <StrategyAdvisor state={state} />
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
+          {statsPanel}
           <div className="flex gap-2">
             <button
               onClick={() => setInputMode('simple')}
