@@ -671,9 +671,29 @@ func loadMatchFromDB(id string) (*engine.MatchState, error) {
 	if err != nil || stateJSON == "" {
 		return nil, err
 	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(stateJSON), &raw); err != nil {
+		return nil, err
+	}
 	var match engine.MatchState
 	if err := json.Unmarshal([]byte(stateJSON), &match); err != nil {
 		return nil, err
+	}
+	// Decode CurrentGameState into concrete type; json.Unmarshal into interface{}
+	// leaves it as a map[string]interface{}.
+	if cs, ok := raw["current_game_state"]; ok {
+		switch match.Type {
+		case "x01":
+			var g engine.X01GameState
+			if err := json.Unmarshal(cs, &g); err == nil {
+				match.CurrentGameState = &g
+			}
+		case "cricket":
+			var g engine.CricketGameState
+			if err := json.Unmarshal(cs, &g); err == nil {
+				match.CurrentGameState = &g
+			}
+		}
 	}
 	return &match, nil
 }

@@ -134,21 +134,29 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
   const needed = Math.floor(match.total_games / 2) + 1;
 
-  const matchScoreDisplay = (
-    <div className="bg-slate-800 rounded-xl p-3 space-y-2">
+  const statsPanel = matchStats && (
+    <div className="bg-slate-800 rounded-xl p-3 space-y-2 w-full">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] text-slate-400 uppercase tracking-wider">
-          Match — Best of {match.total_games} · Leg {match.current_game_index + 1}
-        </div>
-        <div className="text-[10px] text-slate-500">
-          First to {needed} legs
-        </div>
+        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
+        <div className="text-[10px] text-slate-500">Best of {match.total_games} · First to {needed} legs</div>
       </div>
       <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players.length}, 1fr)` }}>
         {match.players.map(p => (
           <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
             <div className="text-xs text-slate-300 truncate">{p.name}</div>
             <div className="text-lg font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
+            {state.type === 'x01' ? (
+              <>
+                <div className="text-[10px] text-slate-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
+                <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
+                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+              </>
+            ) : (
+              <>
+                <div className="text-[10px] text-emerald-400">MPR {matchStats.mpr[p.id]?.toFixed(2) ?? '-'}</div>
+                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+              </>
+            )}
           </div>
         ))}
       </div>
@@ -157,31 +165,6 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
           Match Complete — {match.players.find(p => p.id === match.winner_id)?.name} wins
         </div>
       )}
-    </div>
-  );
-
-  const statsPanel = matchStats && (
-    <div className="bg-slate-800 rounded-xl p-3 space-y-2">
-      <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players.length}, 1fr)` }}>
-        {match.players.map(p => (
-          <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
-            <div className="text-xs text-slate-300 truncate">{p.name}</div>
-            {state.type === 'x01' ? (
-              <>
-                <div className="text-xs text-emerald-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
-                <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
-                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
-              </>
-            ) : (
-              <>
-                <div className="text-xs text-emerald-400">MPR {matchStats.mpr[p.id]?.toFixed(2) ?? '-'}</div>
-                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
     </div>
   );
 
@@ -271,7 +254,6 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="flex-1 min-w-0 space-y-4">
-          {matchScoreDisplay}
           <Scoreboard state={state} lastDarts={lastDarts} />
           <StrategyAdvisor state={state} />
         </div>
