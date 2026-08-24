@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { MatchState, CricketGameState } from '../lib/types';
+import type { MatchState, CricketGameState, X01GameState } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
 import { throwInMatch, endTurnInMatch, undoInMatch, getMatchStats, type MatchEndTurnResponse, type MatchStats } from '../lib/api';
 import Dartboard from './Dartboard';
@@ -259,6 +259,9 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
           {statsPanel}
+          <div className="w-full text-center text-sm text-slate-400">
+            Round {state.round} &middot; {state.type === 'x01' ? `${(state as X01GameState).starting_score} game` : 'Cricket'}
+          </div>
           <div className="flex gap-2">
             <button
               onClick={() => setInputMode('simple')}

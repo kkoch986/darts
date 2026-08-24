@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { GameState, CricketGameState, AiThrowResult } from '../lib/types';
+import type { GameState, CricketGameState, X01GameState, AiThrowResult } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
 import { throwDart, endTurn, undoThrow } from '../lib/api';
 import Dartboard from './Dartboard';
@@ -242,6 +242,10 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
           <Scoreboard state={displayState} lastDarts={lastDarts} />
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
+          <div className="w-full text-center text-sm text-slate-400">
+            Round {state.round} &middot; {state.type === 'x01' ? `${(state as X01GameState).starting_score} game` : 'Cricket'}
+          </div>
+
           {/* Input mode toggle */}
           {!isAnimatingBot && (
             <div className="flex gap-2">

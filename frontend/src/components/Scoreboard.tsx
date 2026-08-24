@@ -20,9 +20,6 @@ function X01Scoreboard({ state, lastDarts }: { state: X01GameState; lastDarts?: 
 
   return (
     <div className="space-y-3">
-      <div className="text-center text-sm text-slate-400">
-        Round {state.round} &middot; {state.starting_score} game
-      </div>
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${state.players.length}, 1fr)` }}>
         {state.players.map((p, i) => (
           <div
@@ -80,10 +77,6 @@ function CricketScoreboard({ state, lastDarts }: { state: CricketGameState; last
 
   return (
     <div className="space-y-3">
-      <div className="text-center text-sm text-slate-400">
-        Round {state.round} &middot; Cricket
-      </div>
-
       <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${state.players.length}, 1fr)` }}>
         {state.players.map((p, i) => (
           <div
