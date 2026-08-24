@@ -123,7 +123,7 @@ func (o *Opponent) deviationSigma() float64 {
 	case Hard:
 		return 15
 	case Professional:
-		return 6
+		return 10
 	}
 	return 50
 }
@@ -211,14 +211,19 @@ func (o *Opponent) x01Hard(remaining int) BotResult {
 
 func (o *Opponent) x01Professional(remaining int) BotResult {
 	var aim Segment
-	if remaining <= 170 {
-		if checkout, ok := smartCheckout(remaining); ok && o.RNG.Float64() < 0.8 {
+	if remaining <= 50 {
+		if checkout, ok := smartCheckout(remaining); ok && o.RNG.Float64() < 0.85 {
 			aim = checkout
 		}
 	}
 	if aim.Value == 0 {
-		val := boardOrder[o.RNG.Intn(20)]
-		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+		if remaining > 60 && o.RNG.Float64() < 0.7 {
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+		} else {
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Single, Value: val, Multiplier: 1}
+		}
 	}
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
