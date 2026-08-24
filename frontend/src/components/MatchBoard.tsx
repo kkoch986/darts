@@ -302,6 +302,14 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
         <div className="flex-1 min-w-0 space-y-4">
+          {match.status === 'completed' && (
+            <div className="bg-emerald-900/40 border border-emerald-700 rounded-xl p-4 text-center space-y-1">
+              <div className="text-emerald-400 font-bold text-sm uppercase tracking-wider">Match Complete</div>
+              <div className="text-white text-xl font-bold">
+                {match.players.find(p => p.id === match.winner_id)?.name ?? 'Unknown'} wins
+              </div>
+            </div>
+          )}
           <Scoreboard state={state} lastDarts={lastDarts} />
           <StrategyAdvisor state={state} />
         </div>
