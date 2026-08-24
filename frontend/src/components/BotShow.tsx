@@ -1,16 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-
-interface BotThrow {
-  player_id: string;
-  name: string;
-  aim: string;
-  segment: string;
-  score: number;
-  error?: string;
-}
+import type { AiThrowResult } from '../lib/types';
 
 interface BotShowProps {
-  throws: BotThrow[];
+  throws: AiThrowResult[];
   gameType?: string;
   closedNumbers?: Set<number>;
   onDone: () => void;
@@ -56,7 +48,7 @@ export default function BotShow({ throws, gameType, closedNumbers, onDone }: Bot
 
   if (throws.length === 0) return null;
 
-  const totalScore = throws.reduce((s, t) => s + t.score, 0);
+  const totalScore = throws.reduce((s, t) => s + (t.points || 0), 0);
 
   const isCricketNumber = (seg: string) => {
     if (seg === 'SB' || seg === 'DB') return true;
@@ -86,10 +78,10 @@ export default function BotShow({ throws, gameType, closedNumbers, onDone }: Bot
         {throws.map((t, i) => {
           const isRevealed = i < visibleCount;
           const isMiss = t.segment === 'Miss';
-          const isScoring = t.score > 0;
+          const isScoring = t.points > 0;
           const cricketNum = getCricketNumber(t.segment);
           const isClosed = cricketNum !== null && closedNumbers?.has(cricketNum);
-          const isMarking = !isMiss && !isScoring && !isClosed && gameType === 'cricket' && isCricketNumber(t.segment);
+          const isMarking = gameType === 'cricket' && !isMiss && !isScoring && !isClosed && isCricketNumber(t.segment);
 
           const boxColor = isMiss
             ? 'bg-red-900/60 text-red-300 line-through'
@@ -109,9 +101,11 @@ export default function BotShow({ throws, gameType, closedNumbers, onDone }: Bot
 
           const labelText = isMiss
             ? 'Miss!'
-            : gameType === 'cricket'
-            ? isScoring ? `+${t.score}` : isMarking ? 'Marks' : '+0'
-            : `+${t.score}`;
+            : isScoring
+            ? `+${t.points}`
+            : isMarking
+            ? 'Marks'
+            : '+0';
 
           return (
             <div

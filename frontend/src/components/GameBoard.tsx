@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { GameState, CricketGameState } from '../lib/types';
+import type { GameState, CricketGameState, AiThrowResult } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
 import { throwDart, endTurn, undoThrow } from '../lib/api';
 import Dartboard from './Dartboard';
@@ -9,15 +9,6 @@ import ThrowLog from './ThrowLog';
 import BotShow from './BotShow';
 import PlayerHeatmap from './PlayerHeatmap';
 import MPRGraph from './MPRGraph';
-
-interface BotThrow {
-  player_id: string;
-  name: string;
-  aim: string;
-  segment: string;
-  score: number;
-  error?: string;
-}
 
 interface GameBoardProps {
   gameId: string;
@@ -33,7 +24,7 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
 
   const [bustInfo, setBustInfo] = useState<string | null>(null);
 
-  const [botThrows, setBotThrows] = useState<BotThrow[] | null>(null);
+  const [botThrows, setBotThrows] = useState<AiThrowResult[] | null>(null);
   const [preBotState, setPreBotState] = useState<GameState | null>(null);
   const [pendingFinalState, setPendingFinalState] = useState<GameState | null>(null);
 
@@ -59,7 +50,7 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
       } else {
         setError(null);
       }
-      const aiTurns = res.ai_turns as BotThrow[] | undefined;
+      const aiTurns = res.ai_turns as AiThrowResult[] | undefined;
       if (aiTurns && aiTurns.length > 0) {
         setPreBotState(state);
         setPendingFinalState(res.state);
@@ -80,7 +71,7 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
 
     try {
       const res = await endTurn(gameId);
-      const aiTurns = res.ai_turns as BotThrow[] | undefined;
+      const aiTurns = res.ai_turns as AiThrowResult[] | undefined;
 
       if (aiTurns && aiTurns.length > 0) {
         setPreBotState(state);

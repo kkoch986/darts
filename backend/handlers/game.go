@@ -324,6 +324,7 @@ type AiThrowResult struct {
 	Aim      string `json:"aim"`
 	Segment  string `json:"segment"`
 	Score    int    `json:"score"`
+	Points   int    `json:"points"`
 	Error    string `json:"error,omitempty"`
 }
 
@@ -437,7 +438,9 @@ func playBotTurnsX01(g *engine.X01GameState) []*AiThrowResult {
 			break
 		}
 		botRes := opp.ThrowX01(p.Score)
+		scoreBefore := p.Score
 		err := g.Throw(botRes.Segment)
+		points := scoreBefore - p.Score
 
 		results = append(results, &AiThrowResult{
 			PlayerID: p.ID,
@@ -445,6 +448,7 @@ func playBotTurnsX01(g *engine.X01GameState) []*AiThrowResult {
 			Aim:      botRes.AimLabel,
 			Segment:  engine.SegmentLabel(botRes.Segment),
 			Score:    engine.SegmentScore(botRes.Segment),
+			Points:   points,
 		})
 
 		if err != nil {
@@ -498,7 +502,7 @@ func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 		botRes := opp.ThrowCricket(openTargets, p.Marks, oppMarks, p.Score, oppScores)
 		scoreBefore := p.Score
 		err := g.Throw(botRes.Segment)
-		scoreDelta := p.Score - scoreBefore
+		points := p.Score - scoreBefore
 
 		log.Printf("[AI cricket] player=%s aim=%s hit=%s openTargets=%v ownMarks=%+v",
 			p.Name, botRes.AimLabel, engine.SegmentLabel(botRes.Segment), openTargets, p.Marks)
@@ -508,7 +512,8 @@ func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 			Name:     p.Name,
 			Aim:      botRes.AimLabel,
 			Segment:  engine.SegmentLabel(botRes.Segment),
-			Score:    scoreDelta,
+			Score:    engine.SegmentScore(botRes.Segment),
+			Points:   points,
 		})
 
 		if err != nil {

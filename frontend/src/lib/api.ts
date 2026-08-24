@@ -1,4 +1,4 @@
-import type { GameState, MatchState, Player, LifetimeStats } from './types';
+import type { GameState, MatchState, Player, LifetimeStats, AiThrowResult } from './types';
 
 const BASE = '/api';
 
@@ -73,14 +73,7 @@ export function throwInMatch(matchId: string, segment: string) {
 
 export interface MatchEndTurnResponse {
   match: MatchState;
-  ai_turns?: {
-    player_id: string;
-    name: string;
-    aim: string;
-    segment: string;
-    score: number;
-    error?: string;
-  }[];
+  ai_turns?: AiThrowResult[];
 }
 
 export function endTurnInMatch(matchId: string) {

@@ -150,6 +150,7 @@ export interface AiThrowResult {
   name: string;
   segment: string;
   score: number;
+  points: number;
   error?: string;
 }
 

@@ -589,6 +589,7 @@ func playBotTurnsX01InMatch(match *engine.MatchState, g *engine.X01GameState) []
 			break
 		}
 		botRes := opp.ThrowX01(p.Score)
+		scoreBefore := p.Score
 		err := g.Throw(botRes.Segment)
 		recordThrow(match, engine.SegmentLabel(botRes.Segment), engine.SegmentScore(botRes.Segment))
 		results = append(results, &AiThrowResult{
@@ -597,6 +598,7 @@ func playBotTurnsX01InMatch(match *engine.MatchState, g *engine.X01GameState) []
 			Aim:      botRes.AimLabel,
 			Segment:  engine.SegmentLabel(botRes.Segment),
 			Score:    engine.SegmentScore(botRes.Segment),
+			Points:   scoreBefore - p.Score,
 			Error: func() string {
 				if err != nil {
 					return err.Error()
@@ -649,6 +651,7 @@ func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameS
 			break
 		}
 		botRes := opp.ThrowCricket(openTargets, p.Marks, oppMarks, p.Score, oppScores)
+		scoreBefore := p.Score
 		g.Throw(botRes.Segment)
 		recordThrow(match, engine.SegmentLabel(botRes.Segment), engine.SegmentScore(botRes.Segment))
 		results = append(results, &AiThrowResult{
@@ -657,6 +660,7 @@ func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameS
 			Aim:      botRes.AimLabel,
 			Segment:  engine.SegmentLabel(botRes.Segment),
 			Score:    engine.SegmentScore(botRes.Segment),
+			Points:   p.Score - scoreBefore,
 		})
 	}
 	if !g.IsOver {
