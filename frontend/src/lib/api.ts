@@ -1,4 +1,4 @@
-import type { GameState, Player, LifetimeStats } from './types';
+import type { GameState, MatchState, Player, LifetimeStats } from './types';
 
 const BASE = '/api';
 

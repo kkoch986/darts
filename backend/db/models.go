@@ -16,15 +16,15 @@ type Player struct {
 }
 
 type Game struct {
-	ID             string         `json:"id"`
-	Type           string         `json:"type"`
-	ConfigJSON     string         `json:"config_json,omitempty"`
-	StateJSON      string         `json:"state_json,omitempty"`
-	CreatedAt      time.Time      `json:"created_at"`
-	CompletedAt    *time.Time     `json:"completed_at,omitempty"`
-	WinnerID       *string        `json:"winner_id,omitempty"`
-	MatchID        *string        `json:"match_id,omitempty"`
-	MatchGameIndex int            `json:"match_game_index"`
+	ID             string     `json:"id"`
+	Type           string     `json:"type"`
+	ConfigJSON     string     `json:"config_json,omitempty"`
+	StateJSON      string     `json:"state_json,omitempty"`
+	CreatedAt      time.Time  `json:"created_at"`
+	CompletedAt    *time.Time `json:"completed_at,omitempty"`
+	WinnerID       *string    `json:"winner_id,omitempty"`
+	MatchID        *string    `json:"match_id,omitempty"`
+	MatchGameIndex int        `json:"match_game_index"`
 }
 
 type GamePlayer struct {
@@ -546,21 +546,21 @@ func GetPlayerLifetimeStats(playerID string, gameType string) (map[string]interf
 	}
 
 	return map[string]interface{}{
-		"player_id":          playerID,
-		"games_played":       gamesPlayed,
-		"games_won":          gamesWon,
-		"total_throws":       totalThrows,
-		"total_rounds":       totalRounds,
+		"player_id":           playerID,
+		"games_played":        gamesPlayed,
+		"games_won":           gamesWon,
+		"total_throws":        totalThrows,
+		"total_rounds":        totalRounds,
 		"avg_rounds_per_game": avgRoundsPerGame,
 		"avg_darts_per_game":  avgDartsPerGame,
-		"segment_hits":       segmentHits,
+		"segment_hits":        segmentHits,
 	}, nil
 }
 
 type historyGameState struct {
-	Type          string           `json:"type"`
-	StartingScore int              `json:"starting_score"`
-	Players       []historyPlayer  `json:"players"`
+	Type          string          `json:"type"`
+	StartingScore int             `json:"starting_score"`
+	Players       []historyPlayer `json:"players"`
 }
 
 type historyPlayer struct {
@@ -666,12 +666,12 @@ func marksFromLabel(label string) int {
 }
 
 type DifficultyStats struct {
-	Difficulty   string  `json:"difficulty"`
-	GamesPlayed  int     `json:"games_played"`
-	GamesWon     int     `json:"games_won"`
-	WinRate      float64 `json:"win_rate"`
-	AvgScore     float64 `json:"avg_score"`
-	MPR          float64 `json:"mpr"`
+	Difficulty  string  `json:"difficulty"`
+	GamesPlayed int     `json:"games_played"`
+	GamesWon    int     `json:"games_won"`
+	WinRate     float64 `json:"win_rate"`
+	AvgScore    float64 `json:"avg_score"`
+	MPR         float64 `json:"mpr"`
 }
 
 func GetPlayerDifficultyStats(playerID string) ([]DifficultyStats, error) {
@@ -843,12 +843,12 @@ type WinMatrixEntry struct {
 }
 
 type TimelineEntry struct {
-	GameID    string `json:"game_id"`
-	Date      string `json:"date"`
-	Won       bool   `json:"won"`
-	Rounds    int    `json:"rounds"`
-	Throws    int    `json:"throws"`
-	Opponent  string `json:"opponent"`
+	GameID   string `json:"game_id"`
+	Date     string `json:"date"`
+	Won      bool   `json:"won"`
+	Rounds   int    `json:"rounds"`
+	Throws   int    `json:"throws"`
+	Opponent string `json:"opponent"`
 }
 
 func GetPlayerTimeline(playerID string, gameType string) ([]TimelineEntry, error) {

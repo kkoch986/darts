@@ -3,16 +3,16 @@ package engine
 import "time"
 
 type GameStats struct {
-	ThrowCount    int            `json:"throw_count"`
-	TurnCount     int            `json:"turn_count"`
-	SegmentHits   map[string]int `json:"segment_hits"`
-	TypeHits      map[string]int `json:"type_hits"`
-	TotalScore    int            `json:"total_score"`
-	TurnAverages  []float64      `json:"turn_averages"`
-	CheckoutAttempts int         `json:"checkout_attempts"`
-	CheckoutSuccesses int        `json:"checkout_successes"`
-	HighTurn      int            `json:"high_turn"`
-	HitTimestamps []time.Time    `json:"hit_timestamps"`
+	ThrowCount        int            `json:"throw_count"`
+	TurnCount         int            `json:"turn_count"`
+	SegmentHits       map[string]int `json:"segment_hits"`
+	TypeHits          map[string]int `json:"type_hits"`
+	TotalScore        int            `json:"total_score"`
+	TurnAverages      []float64      `json:"turn_averages"`
+	CheckoutAttempts  int            `json:"checkout_attempts"`
+	CheckoutSuccesses int            `json:"checkout_successes"`
+	HighTurn          int            `json:"high_turn"`
+	HitTimestamps     []time.Time    `json:"hit_timestamps"`
 }
 
 func NewGameStats() *GameStats {

@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import type { GameState, CricketGameState } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
-import { throwDart, endTurn, undoThrow, getMatch, createNextMatchGame, type MatchScore } from '../lib/api';
+import { throwDart, endTurn, undoThrow } from '../lib/api';
 import Dartboard from './Dartboard';
 import SimpleScoring from './SimpleScoring';
 import Scoreboard from './Scoreboard';
@@ -22,13 +22,11 @@ interface BotThrow {
 interface GameBoardProps {
   gameId: string;
   initialState: GameState;
-  initialMatch?: MatchScore;
   onStateChange: (state: GameState) => void;
 }
 
-export default function GameBoard({ gameId, initialState, initialMatch, onStateChange }: GameBoardProps) {
+export default function GameBoard({ gameId, initialState, onStateChange }: GameBoardProps) {
   const [state, setState] = useState<GameState>(initialState);
-  const [match, setMatch] = useState<MatchScore | undefined>(initialMatch);
   const [inputMode, setInputMode] = useState<'detailed' | 'simple'>('detailed');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -38,11 +36,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
   const [botThrows, setBotThrows] = useState<BotThrow[] | null>(null);
   const [preBotState, setPreBotState] = useState<GameState | null>(null);
   const [pendingFinalState, setPendingFinalState] = useState<GameState | null>(null);
-
-  useEffect(() => {
-    if (!match?.match_id) return;
-    getMatch(match.match_id).then(setMatch).catch(() => {});
-  }, [match?.match_id]);
 
   const currentPlayer = state.players[state.current_player];
   const isHumanTurn = !currentPlayer?.is_bot;
@@ -137,19 +130,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
     }
   }, [gameId, loading, state.is_over, isAnimatingBot, onStateChange]);
 
-  const handleNextMatchGame = async () => {
-    if (!match?.match_id || match.status === 'completed') return;
-    setLoading(true);
-    try {
-      const res = await createNextMatchGame(match.match_id);
-      window.location.href = `/game/${res.game_id}`;
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to start next game');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const lastDarts = useMemo(() => {
     const map: Record<string, string | null> = {};
     for (const p of state.players) {
@@ -165,23 +145,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
     return map;
   }, [state]);
 
-  const matchScoreDisplay = match && (
-    <div className="bg-slate-800 rounded-xl p-4 text-center">
-      <div className="text-xs text-slate-400 uppercase tracking-wider mb-1">Match — Best of {match.total_games}</div>
-      <div className="flex items-center justify-center gap-4">
-        {state.players.map((p, i) => (
-          <div key={p.id} className="text-center">
-            <div className="text-sm text-slate-300 truncate max-w-[100px]">{p.name}</div>
-            <div className="text-2xl font-bold text-emerald-400">{match.scores[p.id] || 0}</div>
-          </div>
-        ))}
-      </div>
-      {match.status === 'completed' && (
-        <div className="text-emerald-400 font-bold mt-2">Match Complete</div>
-      )}
-    </div>
-  );
-
   if (state.is_over) {
     const winner = 'winner' in state ? state.winner : null;
     return (
@@ -192,7 +155,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
             <span className="font-bold text-white">{winner.name}</span> wins!
           </div>
         )}
-        {matchScoreDisplay}
         <Scoreboard state={state} lastDarts={lastDarts} />
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
           <PlayerHeatmap state={state} playerIndex={0} lastDarts={[]} />
@@ -205,15 +167,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
           <MPRGraph state={state as CricketGameState} />
         )}
         <div className="flex gap-3 justify-center">
-          {match && match.status !== 'completed' && (
-            <button
-              onClick={handleNextMatchGame}
-              disabled={loading}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 rounded-lg font-bold transition"
-            >
-              {loading ? 'Loading...' : 'Next Game'}
-            </button>
-          )}
           <button
             onClick={() => window.location.href = '/'}
             className="px-6 py-3 bg-slate-600 hover:bg-slate-500 rounded-lg font-bold transition"
@@ -268,6 +221,11 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
   return (
     <div className="space-y-5">
       {/* Error + last dart */}
+      {error && (
+        <div className="border rounded-lg px-4 py-2 text-sm bg-red-900/50 border-red-700 text-red-300">
+          {error}
+        </div>
+      )}
       {/* Bust modal */}
       {bustInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -286,8 +244,6 @@ export default function GameBoard({ gameId, initialState, initialMatch, onStateC
           </div>
         </div>
       )}
-
-      {matchScoreDisplay}
 
       {/* Main game area: scoreboard + scoring input side by side */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">

@@ -189,11 +189,11 @@ func TestCricket_SingleExtraMark(t *testing.T) {
 func TestCricket_MultipleOpponentsScoring(t *testing.T) {
 	g := makeTestCricketGame(3)
 	g.Throw(seg("T20")) // P0 closes 20
-	g.EndTurn()          // P0 -> P1
+	g.EndTurn()         // P0 -> P1
 	g.Throw(seg("T19")) // P1 does something else (not 20)
-	g.EndTurn()          // P1 -> P2
+	g.EndTurn()         // P1 -> P2
 	g.Throw(seg("S10")) // P2 does something else
-	g.EndTurn()          // P2 -> P0
+	g.EndTurn()         // P2 -> P0
 	// P0 hits T20 again — P1 and P2 both have Marks[20]=0 (open)
 	g.Throw(seg("T20"))
 	// T20 = 60 per open opponent, 2 opponents open = 120

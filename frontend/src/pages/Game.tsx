@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import type { GameState } from '../lib/types';
-import { getGame, getMatch, type MatchScore } from '../lib/api';
+import { getGame } from '../lib/api';
 import GameBoard from '../components/GameBoard';
 
 export default function Game() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
-  const locationState = location.state as (GameState & { match?: MatchScore }) | null;
+  const locationState = location.state as GameState | null;
   const [state, setState] = useState<GameState | null>(locationState || null);
-  const [match, setMatch] = useState<MatchScore | undefined>(locationState?.match);
   const [loading, setLoading] = useState(!state);
 
   useEffect(() => {
@@ -20,12 +19,6 @@ export default function Game() {
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id, state]);
-
-  useEffect(() => {
-    if (match?.match_id) return;
-    if (!state) return;
-    // We don't know match_id from state alone; loaded from location or fetched by GameBoard
-  }, [state, match]);
 
   if (!id || loading) {
     return (
@@ -51,7 +44,6 @@ export default function Game() {
       <GameBoard
         gameId={id}
         initialState={state}
-        initialMatch={match}
         onStateChange={() => {}}
       />
     </div>

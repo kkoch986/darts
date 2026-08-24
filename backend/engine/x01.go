@@ -12,32 +12,32 @@ type X01Config struct {
 }
 
 type X01Player struct {
-	ID           string        `json:"id"`
-	Name         string        `json:"name"`
-	IsBot        bool          `json:"is_bot"`
-	Difficulty   string        `json:"difficulty,omitempty"`
-	Score        int           `json:"score"`
-	ScoreAtTurnStart int       `json:"score_at_turn_start"`
-	DartsUsed    int           `json:"darts_used"`
-	TurnScore    int           `json:"turn_score"`
-	TurnDarts    []ThrowRecord `json:"turn_darts"`
-	History      []ThrowRecord `json:"history"`
-	DoublesIn    bool          `json:"doubles_in"`
-	DartsThrown  int           `json:"darts_thrown"`
-	TotalScore   int           `json:"total_score"`
-	Busted       bool          `json:"busted"`
+	ID               string        `json:"id"`
+	Name             string        `json:"name"`
+	IsBot            bool          `json:"is_bot"`
+	Difficulty       string        `json:"difficulty,omitempty"`
+	Score            int           `json:"score"`
+	ScoreAtTurnStart int           `json:"score_at_turn_start"`
+	DartsUsed        int           `json:"darts_used"`
+	TurnScore        int           `json:"turn_score"`
+	TurnDarts        []ThrowRecord `json:"turn_darts"`
+	History          []ThrowRecord `json:"history"`
+	DoublesIn        bool          `json:"doubles_in"`
+	DartsThrown      int           `json:"darts_thrown"`
+	TotalScore       int           `json:"total_score"`
+	Busted           bool          `json:"busted"`
 }
 
 type X01GameState struct {
-	ID            string         `json:"id"`
-	Type          string         `json:"type"`
-	StartingScore int            `json:"starting_score"`
-	Players       []*X01Player   `json:"players"`
-	CurrentPlayer int            `json:"current_player"`
-	Round         int            `json:"round"`
-	IsOver        bool           `json:"is_over"`
-	Winner        *X01Player     `json:"winner,omitempty"`
-	CreatedAt     time.Time      `json:"created_at"`
+	ID            string                `json:"id"`
+	Type          string                `json:"type"`
+	StartingScore int                   `json:"starting_score"`
+	Players       []*X01Player          `json:"players"`
+	CurrentPlayer int                   `json:"current_player"`
+	Round         int                   `json:"round"`
+	IsOver        bool                  `json:"is_over"`
+	Winner        *X01Player            `json:"winner,omitempty"`
+	CreatedAt     time.Time             `json:"created_at"`
 	Stats         map[string]*GameStats `json:"stats"`
 }
 

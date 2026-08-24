@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createMatch, listPlayers, createPlayer, listMatches, deleteMatch } from '../lib/api';
-import type { Player, Difficulty, MatchSummary } from '../lib/types';
-import type { MatchSummary as ApiMatchSummary } from '../lib/api';
+import type { Player, Difficulty } from '../lib/types';
+import type { MatchSummary } from '../lib/api';
 
 function timeAgo(dateStr: string): string {
   const now = Date.now();

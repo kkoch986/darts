@@ -1,4 +1,4 @@
-import type { GameState, ThrowRecord } from '../lib/types';
+import type { GameState, Segment, ThrowRecord } from '../lib/types';
 
 interface PlayerHeatmapProps {
   state: GameState;
@@ -42,7 +42,7 @@ function heatColor(intensity: number): string {
   return 'rgba(34, 197, 94, 0.4)';
 }
 
-function dotPosition(segment: { type: string; value: number }): { x: number; y: number } | null {
+function dotPosition(segment: Segment): { x: number; y: number } | null {
   const value = segment.value;
   if (segment.type === 4) return polar(6, 0);
   if (segment.type === 3) return polar(OUTER_BULL_R - 2, 0);

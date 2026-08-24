@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import Dartboard from '../components/Dartboard';
 import { BOARD_ORDER } from '../lib/types';
-import { startCheckoutPractice, checkoutPracticeThrow, type CheckoutPracticeState } from '../lib/api';
+import { startCheckoutPractice, checkoutPracticeThrow } from '../lib/api';
 
 const TARGET_OPTIONS: { label: string; display: string }[] = [
   ...BOARD_ORDER.flatMap(n => [
@@ -118,8 +118,9 @@ export default function Practice() {
         turnDarts: p.turn_darts,
         result: res.result,
       });
-      if (res.result === 'checkout' || res.result === 'bust') {
-        setCheckoutHistory(prev => [...prev, { startingScore: res.starting_score, result: res.result }]);
+      const result = res.result;
+      if (result === 'checkout' || result === 'bust') {
+        setCheckoutHistory(prev => [...prev, { startingScore: res.starting_score, result }]);
       }
     } catch {
       // ignore

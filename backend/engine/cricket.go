@@ -10,28 +10,28 @@ import (
 var CricketNumbers = []int{20, 19, 18, 17, 16, 15, 25}
 
 type CricketPlayer struct {
-	ID        string            `json:"id"`
-	Name      string            `json:"name"`
-	IsBot     bool              `json:"is_bot"`
-	Difficulty string           `json:"difficulty,omitempty"`
-	Marks     map[int]int      `json:"marks"`
-	Score     int              `json:"score"`
-	DartsUsed int              `json:"darts_used"`
-	TurnDarts []ThrowRecord    `json:"turn_darts"`
-	History   []ThrowRecord    `json:"history"`
-	Opens     map[int]bool     `json:"opens"`
+	ID         string        `json:"id"`
+	Name       string        `json:"name"`
+	IsBot      bool          `json:"is_bot"`
+	Difficulty string        `json:"difficulty,omitempty"`
+	Marks      map[int]int   `json:"marks"`
+	Score      int           `json:"score"`
+	DartsUsed  int           `json:"darts_used"`
+	TurnDarts  []ThrowRecord `json:"turn_darts"`
+	History    []ThrowRecord `json:"history"`
+	Opens      map[int]bool  `json:"opens"`
 }
 
 type CricketGameState struct {
-	ID            string                   `json:"id"`
-	Type          string                   `json:"type"`
-	Players       []*CricketPlayer         `json:"players"`
-	CurrentPlayer int                      `json:"current_player"`
-	Round         int                      `json:"round"`
-	IsOver        bool                     `json:"is_over"`
-	Winner        *CricketPlayer           `json:"winner,omitempty"`
-	CreatedAt     time.Time                `json:"created_at"`
-	Stats         map[string]*GameStats    `json:"stats"`
+	ID            string                `json:"id"`
+	Type          string                `json:"type"`
+	Players       []*CricketPlayer      `json:"players"`
+	CurrentPlayer int                   `json:"current_player"`
+	Round         int                   `json:"round"`
+	IsOver        bool                  `json:"is_over"`
+	Winner        *CricketPlayer        `json:"winner,omitempty"`
+	CreatedAt     time.Time             `json:"created_at"`
+	Stats         map[string]*GameStats `json:"stats"`
 }
 
 func NewCricketGame(players []*CricketPlayer) *CricketGameState {

@@ -28,11 +28,11 @@ type MatchResponse struct {
 
 // CreateMatchRequest is the payload for starting a new match.
 type CreateMatchRequest struct {
-	Type              string           `json:"type"`
-	StartingScore     int              `json:"starting_score,omitempty"`
-	MatchLength       int              `json:"match_length,omitempty"`
-	FirstThrowerIndex int              `json:"first_thrower_index,omitempty"`
-	Players           []PlayerConfig   `json:"players"`
+	Type              string         `json:"type"`
+	StartingScore     int            `json:"starting_score,omitempty"`
+	MatchLength       int            `json:"match_length,omitempty"`
+	FirstThrowerIndex int            `json:"first_thrower_index,omitempty"`
+	Players           []PlayerConfig `json:"players"`
 }
 
 // CreateMatch starts a new match (best-of series). Single games are match length 1.
@@ -419,13 +419,13 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type matchSummary struct {
-		ID            string  `json:"id"`
-		Type          string  `json:"type"`
-		StartingScore int     `json:"starting_score,omitempty"`
-		TotalGames    int     `json:"total_games"`
-		Status        string  `json:"status"`
-		CreatedAt     string  `json:"created_at"`
-		WinnerName    *string `json:"winner_name,omitempty"`
+		ID            string   `json:"id"`
+		Type          string   `json:"type"`
+		StartingScore int      `json:"starting_score,omitempty"`
+		TotalGames    int      `json:"total_games"`
+		Status        string   `json:"status"`
+		CreatedAt     string   `json:"created_at"`
+		WinnerName    *string  `json:"winner_name,omitempty"`
 		Players       []string `json:"players"`
 	}
 
@@ -597,7 +597,12 @@ func playBotTurnsX01InMatch(match *engine.MatchState, g *engine.X01GameState) []
 			Aim:      botRes.AimLabel,
 			Segment:  engine.SegmentLabel(botRes.Segment),
 			Score:    engine.SegmentScore(botRes.Segment),
-			Error:    func() string { if err != nil { return err.Error() }; return "" }(),
+			Error: func() string {
+				if err != nil {
+					return err.Error()
+				}
+				return ""
+			}(),
 		})
 	}
 	if !g.IsOver {
@@ -678,11 +683,11 @@ func strPtr(s string) *string {
 }
 
 type matchStats struct {
-	LegsWon   map[string]int            `json:"legs_won"`
-	Averages  map[string]float64        `json:"averages"`
-	MPR       map[string]float64        `json:"mpr"`
-	Checkout  map[string]float64        `json:"checkout_pct"`
-	DartsPerLeg map[string]float64      `json:"darts_per_leg"`
+	LegsWon     map[string]int     `json:"legs_won"`
+	Averages    map[string]float64 `json:"averages"`
+	MPR         map[string]float64 `json:"mpr"`
+	Checkout    map[string]float64 `json:"checkout_pct"`
+	DartsPerLeg map[string]float64 `json:"darts_per_leg"`
 }
 
 func computeMatchStats(match *engine.MatchState) matchStats {

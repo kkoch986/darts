@@ -28,10 +28,10 @@ func persistGameState(gameID string, state interface{}) {
 }
 
 type CreateGameRequest struct {
-	Type          string           `json:"type"`
-	StartingScore int              `json:"starting_score,omitempty"`
-	Players       []PlayerConfig   `json:"players"`
-	MatchLength   int              `json:"match_length,omitempty"`
+	Type          string         `json:"type"`
+	StartingScore int            `json:"starting_score,omitempty"`
+	Players       []PlayerConfig `json:"players"`
+	MatchLength   int            `json:"match_length,omitempty"`
 }
 
 type PlayerConfig struct {
@@ -46,10 +46,10 @@ type ThrowRequest struct {
 }
 
 type GameResponse struct {
-	GameID   string         `json:"game_id"`
-	Type     string         `json:"type"`
-	State    interface{}    `json:"state"`
-	Match    *db.MatchScore `json:"match,omitempty"`
+	GameID string         `json:"game_id"`
+	Type   string         `json:"type"`
+	State  interface{}    `json:"state"`
+	Match  *db.MatchScore `json:"match,omitempty"`
 }
 
 func CreateGame(w http.ResponseWriter, r *http.Request) {
@@ -228,9 +228,9 @@ func Throw(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type throwResult struct {
-		State      interface{} `json:"state"`
-		Error      string      `json:"error,omitempty"`
-		AiTurns    []*AiThrowResult `json:"ai_turns,omitempty"`
+		State   interface{}      `json:"state"`
+		Error   string           `json:"error,omitempty"`
+		AiTurns []*AiThrowResult `json:"ai_turns,omitempty"`
 	}
 
 	switch g := state.(type) {
@@ -319,12 +319,12 @@ func Throw(w http.ResponseWriter, r *http.Request) {
 }
 
 type AiThrowResult struct {
-	PlayerID string      `json:"player_id"`
-	Name     string      `json:"name"`
-	Aim      string      `json:"aim"`
-	Segment  string      `json:"segment"`
-	Score    int         `json:"score"`
-	Error    string      `json:"error,omitempty"`
+	PlayerID string `json:"player_id"`
+	Name     string `json:"name"`
+	Aim      string `json:"aim"`
+	Segment  string `json:"segment"`
+	Score    int    `json:"score"`
+	Error    string `json:"error,omitempty"`
 }
 
 func EndTurn(w http.ResponseWriter, r *http.Request) {
@@ -340,7 +340,7 @@ func EndTurn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type endTurnResult struct {
-		State   interface{}    `json:"state"`
+		State   interface{}      `json:"state"`
 		AiTurns []*AiThrowResult `json:"ai_turns,omitempty"`
 	}
 
@@ -581,15 +581,15 @@ func ListGames(w http.ResponseWriter, r *http.Request) {
 }
 
 type GameSummary struct {
-	ID            string            `json:"id"`
-	Type          string            `json:"type"`
-	StartingScore int               `json:"starting_score,omitempty"`
-	CreatedAt     string            `json:"created_at"`
-	CompletedAt   *string           `json:"completed_at,omitempty"`
-	WinnerName    *string           `json:"winner_name,omitempty"`
-	Players       []string          `json:"players"`
-	Scores        map[string]int    `json:"scores,omitempty"`
-	Rounds        int               `json:"rounds,omitempty"`
+	ID            string         `json:"id"`
+	Type          string         `json:"type"`
+	StartingScore int            `json:"starting_score,omitempty"`
+	CreatedAt     string         `json:"created_at"`
+	CompletedAt   *string        `json:"completed_at,omitempty"`
+	WinnerName    *string        `json:"winner_name,omitempty"`
+	Players       []string       `json:"players"`
+	Scores        map[string]int `json:"scores,omitempty"`
+	Rounds        int            `json:"rounds,omitempty"`
 }
 
 func ListGamesWithDetails(w http.ResponseWriter, r *http.Request) {

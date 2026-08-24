@@ -12,8 +12,8 @@ import (
 )
 
 var (
-	practiceGames   = make(map[string]*engine.X01GameState)
-	practiceMu      sync.RWMutex
+	practiceGames = make(map[string]*engine.X01GameState)
+	practiceMu    sync.RWMutex
 )
 
 type StartCheckoutPracticeRequest struct {
