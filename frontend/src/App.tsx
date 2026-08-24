@@ -30,7 +30,7 @@ export default function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-slate-900 text-white">
         {/* Nav */}
-        <nav className="bg-slate-800 border-b border-slate-700 px-4 py-3">
+        <nav className={`bg-slate-800 border-b border-slate-700 px-4 py-3 ${isFullscreen ? 'hidden' : ''}`}>
           <div className="max-w-4xl mx-auto flex items-center justify-between">
             <Link to="/" className="text-xl font-bold text-emerald-400">
               Darts
