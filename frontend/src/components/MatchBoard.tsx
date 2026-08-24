@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { Trophy } from 'lucide-react';
 import type { MatchState, CricketGameState, X01GameState } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
 import { throwInMatch, endTurnInMatch, undoInMatch, getMatchStats, type MatchEndTurnResponse, type MatchStats } from '../lib/api';
@@ -26,6 +27,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const [botThrows, setBotThrows] = useState<MatchEndTurnResponse['ai_turns'] | null>(null);
   const [preBotMatch, setPreBotMatch] = useState<MatchState | null>(null);
   const [matchStats, setMatchStats] = useState<MatchStats | null>(null);
+  const [fanfare, setFanfare] = useState<{ type: 'leg' | 'match'; winnerName: string } | null>(null);
   const botInProgress = useRef(false);
 
   useEffect(() => {
@@ -37,9 +39,24 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const isHumanTurn = !currentPlayer?.is_bot;
 
   const handleUpdate = useCallback((res: { match: MatchState; error?: string }) => {
-    setMatch(res.match);
-    onMatchChange?.(res.match);
-    return res.match;
+    const newMatch = res.match;
+    setMatch(prev => {
+      const prevLegs = prev.leg_history?.length ?? 0;
+      const newLegs = newMatch.leg_history?.length ?? 0;
+      const justCompleted = newMatch.status === 'completed' && prev.status !== 'completed';
+      const justWonLeg = newLegs > prevLegs;
+      const winner = justCompleted || justWonLeg
+        ? newMatch.players.find(p => p.id === newMatch.winner_id) || newMatch.players.find(p => p.id === newMatch.leg_history?.[newLegs - 1]?.winner_id)
+        : undefined;
+      if (justCompleted && winner) {
+        setFanfare({ type: 'match', winnerName: winner.name });
+      } else if (justWonLeg && winner) {
+        setFanfare({ type: 'leg', winnerName: winner.name });
+      }
+      return newMatch;
+    });
+    onMatchChange?.(newMatch);
+    return newMatch;
   }, [onMatchChange]);
 
   const handleThrow = useCallback(async (label: string) => {
@@ -134,7 +151,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
   const needed = Math.floor(match.total_games / 2) + 1;
 
-  const statsPanel = matchStats && (
+  const statsPanel = matchStats && match.total_games > 1 && (
     <div className="bg-slate-800 rounded-xl p-3 space-y-2 w-full">
       <div className="flex items-center justify-between">
         <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
@@ -229,6 +246,37 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
             <div className="text-amber-400 font-black text-3xl tracking-wide">BUST</div>
             <div className="text-amber-200/80 text-sm">{bustInfo}</div>
             <div className="text-amber-500/50 text-xs mt-1">turn reverted</div>
+          </div>
+        </div>
+      )}
+
+      {fanfare && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-800 rounded-2xl p-8 shadow-2xl border border-slate-700 max-w-sm w-full mx-4 text-center space-y-5 animate-in fade-in zoom-in duration-200">
+            <div className="flex justify-center">
+              <Trophy size={56} className="text-emerald-400" />
+            </div>
+            <div>
+              <div className="text-2xl font-bold text-emerald-400">
+                {fanfare.type === 'match' ? 'Match Winner' : 'Leg Winner'}
+              </div>
+              <div className="text-xl text-white font-medium mt-1">{fanfare.winnerName}</div>
+            </div>
+            {fanfare.type === 'match' ? (
+              <button
+                onClick={() => window.location.href = '/'}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition"
+              >
+                New Match
+              </button>
+            ) : (
+              <button
+                onClick={() => setFanfare(null)}
+                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 rounded-lg font-bold transition"
+              >
+                Continue
+              </button>
+            )}
           </div>
         </div>
       )}
