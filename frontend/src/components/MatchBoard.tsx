@@ -311,60 +311,64 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
             </div>
           )}
           <Scoreboard state={state} lastDarts={lastDarts} />
-          <StrategyAdvisor state={state} />
+          {match.status !== 'completed' && <StrategyAdvisor state={state} />}
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
           {statsPanel}
-          <div className="w-full text-center text-sm text-slate-400">
-            Round {state.round} &middot; {state.type === 'x01' ? `${(state as X01GameState).starting_score} game` : 'Cricket'}
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setInputMode('simple')}
-              className={`px-4 py-2 rounded text-sm font-medium transition ${
-                inputMode === 'simple'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              Simple
-            </button>
-            <button
-              onClick={() => setInputMode('detailed')}
-              className={`px-4 py-2 rounded text-sm font-medium transition ${
-                inputMode === 'detailed'
-                  ? 'bg-emerald-600 text-white'
-                  : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-              }`}
-            >
-              Board
-            </button>
-          </div>
+          {match.status !== 'completed' && (
+            <>
+              <div className="w-full text-center text-sm text-slate-400">
+                Round {state.round} &middot; {state.type === 'x01' ? `${(state as X01GameState).starting_score} game` : 'Cricket'}
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setInputMode('simple')}
+                  className={`px-4 py-2 rounded text-sm font-medium transition ${
+                    inputMode === 'simple'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  Simple
+                </button>
+                <button
+                  onClick={() => setInputMode('detailed')}
+                  className={`px-4 py-2 rounded text-sm font-medium transition ${
+                    inputMode === 'detailed'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                  }`}
+                >
+                  Board
+                </button>
+              </div>
 
-          {!isHumanTurn && !state.is_over && (
-            <div className="text-center text-slate-400 animate-pulse text-sm">
-              Bot is thinking...
-            </div>
+              {!isHumanTurn && !state.is_over && (
+                <div className="text-center text-slate-400 animate-pulse text-sm">
+                  Bot is thinking...
+                </div>
+              )}
+
+              {scoringInput}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleUndo}
+                  disabled={loading || state.is_over || !isHumanTurn}
+                  className="px-5 py-3 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
+                >
+                  Undo
+                </button>
+                <button
+                  onClick={handleEndTurn}
+                  disabled={loading || state.is_over || !isHumanTurn}
+                  className="px-6 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
+                >
+                  End Turn
+                </button>
+              </div>
+            </>
           )}
-
-          {scoringInput}
-
-          <div className="flex gap-3">
-            <button
-              onClick={handleUndo}
-              disabled={loading || state.is_over || !isHumanTurn}
-              className="px-5 py-3 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
-            >
-              Undo
-            </button>
-            <button
-              onClick={handleEndTurn}
-              disabled={loading || state.is_over || !isHumanTurn}
-              className="px-6 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
-            >
-              End Turn
-            </button>
-          </div>
         </div>
       </div>
 

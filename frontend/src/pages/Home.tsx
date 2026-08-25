@@ -430,9 +430,10 @@ export default function Home() {
                 <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Recent Matches</h2>
                 <div className="max-h-80 overflow-y-auto space-y-2">
                   {completedMatches.map(m => (
-                    <div
+                    <button
                       key={m.id}
-                      className="py-2 px-4 bg-slate-700/50 rounded-lg"
+                      onClick={() => navigate(`/match/${m.id}`)}
+                      className="w-full py-2 px-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left transition"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -454,7 +455,7 @@ export default function Home() {
                           <span className="text-slate-500 text-xs">Match completed</span>
                         )}
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
