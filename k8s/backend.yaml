@@ -1,0 +1,76 @@
+# Backend deployment.
+#
+# IMPORTANT: keep replicaCount at 1. The SQLite database is single-writer and is
+# stored on a node-local volume; running multiple replicas would cause the pods
+# to read/write separate or contested DB files.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: darts-backend
+  namespace: darts
+  labels:
+    app: darts
+    tier: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: darts
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: darts
+        tier: backend
+    spec:
+      containers:
+        - name: darts-backend
+          image: darts-backend:latest   # Replace with your registry image, e.g. ghcr.io/you/darts-backend:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DARTS_DB_PATH
+              value: /data/darts.db
+          ports:
+            - name: http
+              containerPort: 8080
+          volumeMounts:
+            - name: darts-db
+              mountPath: /data
+          livenessProbe:
+            httpGet:
+              path: /api/games
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/games
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+      volumes:
+        - name: darts-db
+          persistentVolumeClaim:
+            claimName: darts-db
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: darts-backend
+  namespace: darts
+spec:
+  selector:
+    app: darts
+    tier: backend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

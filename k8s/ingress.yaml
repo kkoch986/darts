@@ -1,0 +1,31 @@
+# Ingress for the darts app.
+# Adjust host, ingressClassName, and TLS to match your home cluster.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: darts
+  namespace: darts
+  annotations:
+    # Room for WebSocket-like / long-lived API calls if you add them later.
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+spec:
+  # Uncomment if you use a non-default ingress controller:
+  # ingressClassName: nginx
+  rules:
+    - host: darts.example.com   # Replace with your domain / hostname
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: darts-frontend
+                port:
+                  name: http
+  # Uncomment to terminate TLS at the ingress:
+  # tls:
+  #   - hosts:
+  #       - darts.example.com
+  #     secretName: darts-tls

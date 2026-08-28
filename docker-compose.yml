@@ -1,0 +1,26 @@
+services:
+  backend:
+    build: ./backend
+    container_name: darts-backend
+    environment:
+      DARTS_DB_PATH: /data/darts.db
+    volumes:
+      - darts-data:/data
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        DARTS_BACKEND_HOST: backend
+    container_name: darts-frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+
+volumes:
+  darts-data:

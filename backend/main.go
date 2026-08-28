@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/ken/darts-backend/api"
 	"github.com/ken/darts-backend/db"
@@ -10,7 +11,11 @@ import (
 )
 
 func main() {
-	db.InitDB("./darts.db")
+	dbPath := os.Getenv("DARTS_DB_PATH")
+	if dbPath == "" {
+		dbPath = "./darts.db"
+	}
+	db.InitDB(dbPath)
 	defer db.DB.Close()
 
 	handlers.LoadActiveGames()

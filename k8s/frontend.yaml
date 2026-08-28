@@ -1,0 +1,61 @@
+# Frontend deployment. Stateless SPA + nginx, safe to scale to multiple replicas.
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: darts-frontend
+  namespace: darts
+  labels:
+    app: darts
+    tier: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: darts
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: darts
+        tier: frontend
+    spec:
+      containers:
+        - name: darts-frontend
+          # The nginx image uses envsubst at startup to proxy /api to this
+          # backend hostname. Point DARTS_BACKEND_HOST at the backend Service.
+          image: darts-frontend:latest   # Replace with your registry image, e.g. ghcr.io/you/darts-frontend:1.0.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DARTS_BACKEND_HOST
+              value: darts-backend
+          ports:
+            - name: http
+              containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 5
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: darts-frontend
+  namespace: darts
+spec:
+  selector:
+    app: darts
+    tier: frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

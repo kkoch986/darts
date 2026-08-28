@@ -1,0 +1,29 @@
+# Persistent volume claim for the SQLite database.
+#
+# SQLite is a single-file, single-writer database. It does NOT work well on
+# distributed/network filesystems that lack POSIX file locking (e.g. NFS with
+# certain clients, or CephFS without proper locking). For a home cluster:
+#   - Use a local-path / hostPath volume on the SAME node the backend runs on,
+#     or
+#   - Use a node-local storage class (e.g. rancher local-path, OpenEBS LocalPV),
+#     or
+#   - If your CSI driver supports proper file locking (e.g. Longhorn with RWX),
+#     that can work too.
+#
+# Because the data is node-local in many home setups, ALSO keep the backend at
+# replicaCount: 1 so the DB files are never written by two pods on different
+# nodes simultaneously.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: darts-db
+  namespace: darts
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  # Uncomment and adjust if your cluster exposes a specific storage class:
+  # storageClassName: local-path
