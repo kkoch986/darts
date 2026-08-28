@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { Trophy } from 'lucide-react';
-import type { MatchState, CricketGameState, X01GameState } from '../lib/types';
+import type { MatchState, CricketGameState, X01GameState, GameState } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
-import { throwInMatch, endTurnInMatch, undoInMatch, getMatchStats, type MatchEndTurnResponse, type MatchStats } from '../lib/api';
+import { throwInMatch, endTurnInMatch, undoInMatch, getMatchStats, getGame, type MatchEndTurnResponse, type MatchStats } from '../lib/api';
 import Dartboard from './Dartboard';
 import SimpleScoring from './SimpleScoring';
 import Scoreboard from './Scoreboard';
@@ -28,36 +28,63 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const [preBotMatch, setPreBotMatch] = useState<MatchState | null>(null);
   const [matchStats, setMatchStats] = useState<MatchStats | null>(null);
   const [fanfare, setFanfare] = useState<{ type: 'leg' | 'match'; winnerName: string } | null>(null);
+  const pendingFanfare = useRef<{ type: 'leg' | 'match'; winnerName: string } | null>(null);
   const botInProgress = useRef(false);
+  const [selectedLeg, setSelectedLeg] = useState<number | null>(null);
+  const [historicalGame, setHistoricalGame] = useState<GameState | null>(null);
+  const [loadingLeg, setLoadingLeg] = useState(false);
 
   useEffect(() => {
     getMatchStats(matchId).then(setMatchStats).catch(() => {});
   }, [matchId, match]);
 
-  const state = match.current_game_state;
-  const currentPlayer = state.players[state.current_player];
-  const isHumanTurn = !currentPlayer?.is_bot;
+  // Load historical game when a leg is selected
+  useEffect(() => {
+    if (selectedLeg === null || !match.leg_history || !match.leg_history[selectedLeg]) {
+      setHistoricalGame(null);
+      return;
+    }
+    const gameId = match.leg_history[selectedLeg].game_id;
+    setLoadingLeg(true);
+    getGame(gameId)
+      .then(g => setHistoricalGame(g))
+      .catch(() => setHistoricalGame(null))
+      .finally(() => setLoadingLeg(false));
+  }, [selectedLeg, match.leg_history]);
 
-  const handleUpdate = useCallback((res: { match: MatchState; error?: string }) => {
+  const state = match.current_game_state;
+  const displayState = historicalGame || state;
+  const viewingHistorical = selectedLeg !== null;
+  const currentPlayer = displayState.players[displayState.current_player];
+  const isHumanTurn = !currentPlayer?.is_bot && !viewingHistorical;
+
+  const computeFanfare = useCallback((prev: MatchState, newMatch: MatchState): { type: 'leg' | 'match'; winnerName: string } | null => {
+    const prevLegs = prev.leg_history?.length ?? 0;
+    const newLegs = newMatch.leg_history?.length ?? 0;
+    const justCompleted = newMatch.status === 'completed' && prev.status !== 'completed';
+    const justWonLeg = newLegs > prevLegs;
+    if (!justCompleted && !justWonLeg) return null;
+    const winner = newMatch.players.find(p => p.id === newMatch.winner_id) || newMatch.players.find(p => p.id === newMatch.leg_history?.[newLegs - 1]?.winner_id);
+    if (!winner) return null;
+    return { type: justCompleted ? 'match' : 'leg', winnerName: winner.name };
+  }, []);
+
+  const handleUpdate = useCallback((res: { match: MatchState; error?: string }, deferFanfare?: boolean) => {
     const newMatch = res.match;
     setMatch(prev => {
-      const prevLegs = prev.leg_history?.length ?? 0;
-      const newLegs = newMatch.leg_history?.length ?? 0;
-      const justCompleted = newMatch.status === 'completed' && prev.status !== 'completed';
-      const justWonLeg = newLegs > prevLegs;
-      const winner = justCompleted || justWonLeg
-        ? newMatch.players.find(p => p.id === newMatch.winner_id) || newMatch.players.find(p => p.id === newMatch.leg_history?.[newLegs - 1]?.winner_id)
-        : undefined;
-      if (justCompleted && winner) {
-        setFanfare({ type: 'match', winnerName: winner.name });
-      } else if (justWonLeg && winner) {
-        setFanfare({ type: 'leg', winnerName: winner.name });
+      const f = computeFanfare(prev, newMatch);
+      if (f) {
+        if (deferFanfare) {
+          pendingFanfare.current = f;
+        } else {
+          setFanfare(f);
+        }
       }
       return newMatch;
     });
     onMatchChange?.(newMatch);
     return newMatch;
-  }, [onMatchChange]);
+  }, [onMatchChange, computeFanfare]);
 
   const handleThrow = useCallback(async (label: string) => {
     if (!isHumanTurn || loading || state.is_over) return;
@@ -84,11 +111,12 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
     setLoading(true);
     try {
       const res = await endTurnInMatch(matchId);
-      if (res.ai_turns && res.ai_turns.length > 0) {
+      const hasBotTurns = res.ai_turns && res.ai_turns.length > 0;
+      if (hasBotTurns) {
         setPreBotMatch(match);
         setBotThrows(res.ai_turns);
       }
-      handleUpdate(res);
+      handleUpdate(res, !!hasBotTurns);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Bot turn failed');
     } finally {
@@ -108,6 +136,10 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
   const handleBotAnimationDone = useCallback(() => {
     setBotThrows(null);
     setPreBotMatch(null);
+    if (pendingFanfare.current) {
+      setFanfare(pendingFanfare.current);
+      pendingFanfare.current = null;
+    }
   }, []);
 
   const handleEndTurn = useCallback(async () => {
@@ -117,11 +149,12 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
     try {
       const res = await endTurnInMatch(matchId);
-      if (res.ai_turns && res.ai_turns.length > 0) {
+      const hasBotTurns = res.ai_turns && res.ai_turns.length > 0;
+      if (hasBotTurns) {
         setPreBotMatch(match);
         setBotThrows(res.ai_turns);
       }
-      handleUpdate(res);
+      handleUpdate(res, !!hasBotTurns);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'End turn failed');
     } finally {
@@ -157,12 +190,12 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
         <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
         <div className="text-[10px] text-slate-500">Best of {match.total_games} · First to {needed} legs</div>
       </div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players.length}, 1fr)` }}>
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players?.length ?? 1}, 1fr)` }}>
         {match.players.map(p => (
           <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
             <div className="text-xs text-slate-300 truncate">{p.name}</div>
             <div className="text-lg font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
-            {state.type === 'x01' ? (
+            {displayState.type === 'x01' ? (
               <>
                 <div className="text-[10px] text-slate-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
                 <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
@@ -187,7 +220,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
   const lastDarts = useMemo(() => {
     const map: Record<string, string | null> = {};
-    for (const p of state.players) {
+    for (const p of displayState.players || []) {
       const hist = (p as { history?: { label: string }[] }).history;
       if (hist && hist.length > 0) {
         map[p.id] = hist[hist.length - 1].label;
@@ -198,11 +231,11 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
       }
     }
     return map;
-  }, [state]);
+  }, [displayState]);
 
-  const cricketNumbers = state.type === 'cricket'
-    ? (state as CricketGameState).players[0]
-      ? Object.keys((state as CricketGameState).players[0].marks).map(Number)
+  const cricketNumbers = displayState.type === 'cricket'
+    ? (displayState as CricketGameState).players[0]
+      ? Object.keys((displayState as CricketGameState).players[0].marks).map(Number)
       : [20,19,18,17,16,15,25]
     : undefined;
 
@@ -225,7 +258,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
       ) : (
         <SimpleScoring
           onSelect={handleThrow}
-          gameType={state.type}
+          gameType={displayState.type}
           cricketNumbers={cricketNumbers}
         />
       )}
@@ -310,15 +343,44 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
               </div>
             </div>
           )}
-          <Scoreboard state={state} lastDarts={lastDarts} />
-          {match.status !== 'completed' && <StrategyAdvisor state={state} />}
+          {(match.leg_history?.length ?? 0) > 0 && (
+            <div className="flex gap-1 overflow-x-auto pb-1">
+              {match.leg_history.map((leg, i) => {
+                const winner = match.players.find(p => p.id === leg.winner_id);
+                const isSelected = selectedLeg === i;
+                return (
+                  <button
+                    key={leg.game_id}
+                    onClick={() => setSelectedLeg(selectedLeg === i ? null : i)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition whitespace-nowrap ${
+                      isSelected
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                    }`}
+                  >
+                    Leg {i + 1}{winner ? ` · ${winner.name}` : ''}
+                  </button>
+                );
+              })}
+              {selectedLeg !== null && (
+                <button
+                  onClick={() => setSelectedLeg(null)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition bg-slate-600 text-slate-300 hover:bg-slate-500"
+                >
+                  Latest
+                </button>
+              )}
+            </div>
+          )}
+          <Scoreboard state={displayState} lastDarts={lastDarts} />
+          {match.status !== 'completed' && <StrategyAdvisor state={displayState} />}
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
           {statsPanel}
-          {match.status !== 'completed' && (
+          {match.status !== 'completed' && !viewingHistorical && (
             <>
               <div className="w-full text-center text-sm text-slate-400">
-                Round {state.round} &middot; {state.type === 'x01' ? `${(state as X01GameState).starting_score} game` : 'Cricket'}
+                Round {displayState.round} &middot; {displayState.type === 'x01' ? `${(displayState as X01GameState).starting_score} game` : 'Cricket'}
               </div>
               <div className="flex gap-2">
                 <button
@@ -373,15 +435,21 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-        <PlayerHeatmap state={state} playerIndex={0} lastDarts={state.players[0]?.turn_darts} />
-        <ThrowLog state={state} />
-        {state.players.length > 1 && (
-          <PlayerHeatmap state={state} playerIndex={1} lastDarts={state.players[1]?.turn_darts} />
+        <PlayerHeatmap state={displayState} playerIndex={0} lastDarts={displayState.players[0]?.turn_darts} />
+        {loadingLeg ? (
+          <div className="bg-slate-800/80 rounded-xl p-4 flex-1 min-w-0 flex items-center justify-center h-80">
+            <span className="text-slate-400 text-sm animate-pulse">Loading leg...</span>
+          </div>
+        ) : (
+          <ThrowLog state={displayState} />
+        )}
+        {(displayState.players?.length ?? 0) > 1 && (
+          <PlayerHeatmap state={displayState} playerIndex={1} lastDarts={displayState.players[1]?.turn_darts} />
         )}
       </div>
 
-      {state.type === 'cricket' && (
-        <MPRGraph state={state as CricketGameState} />
+      {displayState.type === 'cricket' && (
+        <MPRGraph state={displayState as CricketGameState} />
       )}
     </div>
   );

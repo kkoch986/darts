@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -35,17 +36,9 @@ type CreateMatchRequest struct {
 	Players           []PlayerConfig `json:"players"`
 }
 
-// CreateMatch starts a new match (best-of series). Single games are match length 1.
-func CreateMatch(w http.ResponseWriter, r *http.Request) {
-	var req CreateMatchRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
+func createMatchInternal(req CreateMatchRequest) (*engine.MatchState, error) {
 	if req.Type != "x01" && req.Type != "cricket" {
-		http.Error(w, "game type must be 'x01' or 'cricket'", http.StatusBadRequest)
-		return
+		return nil, fmt.Errorf("game type must be 'x01' or 'cricket'")
 	}
 
 	matchLength := req.MatchLength
@@ -82,8 +75,7 @@ func CreateMatch(w http.ResponseWriter, r *http.Request) {
 
 	match, err := engine.NewMatch(req.Type, startScore, matchLength, players, firstThrower)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
 	matchMu.Lock()
@@ -110,6 +102,22 @@ func CreateMatch(w http.ResponseWriter, r *http.Request) {
 
 	persistMatchState(match)
 	persistCurrentLeg(match)
+	return match, nil
+}
+
+// CreateMatch starts a new match (best-of series). Single games are match length 1.
+func CreateMatch(w http.ResponseWriter, r *http.Request) {
+	var req CreateMatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	match, err := createMatchInternal(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(MatchResponse{Match: match})
@@ -419,14 +427,16 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type matchSummary struct {
-		ID            string   `json:"id"`
-		Type          string   `json:"type"`
-		StartingScore int      `json:"starting_score,omitempty"`
-		TotalGames    int      `json:"total_games"`
-		Status        string   `json:"status"`
-		CreatedAt     string   `json:"created_at"`
-		WinnerName    *string  `json:"winner_name,omitempty"`
-		Players       []string `json:"players"`
+		ID            string            `json:"id"`
+		Type          string            `json:"type"`
+		StartingScore int               `json:"starting_score,omitempty"`
+		TotalGames    int               `json:"total_games"`
+		Status        string            `json:"status"`
+		CreatedAt     string            `json:"created_at"`
+		WinnerName    *string           `json:"winner_name,omitempty"`
+		Players       []string          `json:"players"`
+		PlayerIDs     []string          `json:"player_ids"`
+		GameScores    map[string]int    `json:"game_scores,omitempty"`
 	}
 
 	var summaries []matchSummary
@@ -441,6 +451,7 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 		}
 		players, _ := db.GetMatchPlayers(s.ID)
 		for _, p := range players {
+			s.PlayerIDs = append(s.PlayerIDs, p.PlayerID)
 			if pl, _ := db.GetPlayer(p.PlayerID); pl != nil {
 				s.Players = append(s.Players, pl.Name)
 			} else {
@@ -461,6 +472,12 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 							s.WinnerName = &p.Name
 							break
 						}
+					}
+				}
+				if len(ms.GameScores) > 0 {
+					s.GameScores = make(map[string]int)
+					for k, v := range ms.GameScores {
+						s.GameScores[k] = v
 					}
 				}
 			}
@@ -543,10 +560,11 @@ func finishLeg(match *engine.MatchState, gameID string) {
 	db.DB.Exec("UPDATE games SET completed_at = ?, winner_id = ? WHERE id = ?", now, winnerID, gameID)
 
 	match.RecordLegWin(winnerID)
+	persistMatchState(match)
 	if match.Status == "completed" {
 		db.DB.Exec("UPDATE matches SET status = 'completed', winner_id = ?, completed_at = ? WHERE id = ?", winnerID, now, match.ID)
+		go UpdateTournamentAfterMatch(match.ID)
 	}
-	persistMatchState(match)
 }
 
 func recordThrow(match *engine.MatchState, label string, score int) {

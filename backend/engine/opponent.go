@@ -278,17 +278,25 @@ func (o *Opponent) x01Sniper(remaining int) BotResult {
 
 func (o *Opponent) x01Jester(remaining int) BotResult {
 	var aim Segment
-	r := o.RNG.Float64()
-	switch {
-	case r < 0.5:
-		val := boardOrder[o.RNG.Intn(20)]
-		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
-	case r < 0.8:
-		val := boardOrder[o.RNG.Intn(20)]
-		aim = Segment{Type: Double, Value: val, Multiplier: 2}
-	default:
-		val := boardOrder[o.RNG.Intn(20)]
-		aim = Segment{Type: Single, Value: val, Multiplier: 1}
+	// Occasionally stumbles into a checkout attempt.
+	if remaining <= 50 && remaining%2 == 0 && o.RNG.Float64() < 0.25 {
+		if checkout, ok := smartCheckout(remaining); ok {
+			aim = checkout
+		}
+	}
+	if aim.Value == 0 {
+		r := o.RNG.Float64()
+		switch {
+		case r < 0.5:
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+		case r < 0.8:
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Double, Value: val, Multiplier: 2}
+		default:
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Single, Value: val, Multiplier: 1}
+		}
 	}
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }
@@ -301,8 +309,14 @@ func (o *Opponent) x01Bully(remaining int) BotResult {
 		}
 	}
 	if aim.Value == 0 {
-		val := boardOrder[o.RNG.Intn(20)]
-		aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+		if remaining <= 6 && remaining%2 == 1 {
+			// Small odd remainder — no single-dart checkout. Aim S1 to set up
+			// an even remainder for the next turn (e.g. 3→2→D1, 5→4→D2).
+			aim = Segment{Type: Single, Value: 1, Multiplier: 1}
+		} else {
+			val := boardOrder[o.RNG.Intn(20)]
+			aim = Segment{Type: Triple, Value: val, Multiplier: 3}
+		}
 	}
 	return BotResult{Segment: o.deviate(aim), AimLabel: SegmentLabel(aim)}
 }

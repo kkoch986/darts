@@ -1,4 +1,4 @@
-import type { GameState, MatchState, Player, LifetimeStats, AiThrowResult } from './types';
+import type { GameState, MatchState, Player, LifetimeStats, AiThrowResult, Tournament } from './types';
 
 const BASE = '/api';
 
@@ -33,6 +33,8 @@ export interface MatchSummary {
   created_at: string;
   winner_name?: string;
   players: string[];
+  player_ids?: string[];
+  game_scores?: Record<string, number>;
 }
 
 export interface MatchStats {
@@ -273,4 +275,26 @@ export function checkoutPracticeThrow(practiceId: string, segment: string) {
     method: 'POST',
     body: JSON.stringify({ segment }),
   });
+}
+
+export function createTournament(payload: {
+  name: string;
+  type: 'single_elimination' | 'round_robin' | 'double_elimination';
+  game_type: 'x01' | 'cricket';
+  starting_score?: number;
+  match_length: number;
+  players: { id?: string; name: string; is_bot: boolean; difficulty?: string }[];
+}) {
+  return request<Tournament>('/tournaments', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export function listTournaments() {
+  return request<Tournament[]>('/tournaments');
+}
+
+export function getTournament(id: string) {
+  return request<Tournament>(`/tournaments/${id}`);
 }

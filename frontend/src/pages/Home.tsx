@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createMatch, listPlayers, createPlayer, listMatches, deleteMatch } from '../lib/api';
+import { createMatch, listPlayers, createPlayer, listMatches, deleteMatch, listTournaments } from '../lib/api';
 import { PERSONAS } from '../lib/types';
 import type { Player, Persona } from '../lib/types';
 import type { MatchSummary } from '../lib/api';
@@ -30,10 +30,12 @@ export default function Home() {
   const [firstThrower, setFirstThrower] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [matches, setMatches] = useState<MatchSummary[]>([]);
+  const [tournaments, setTournaments] = useState<{ id: string; name: string; status: string; game_type: string; created_at: string }[]>([]);
 
   useEffect(() => {
     listPlayers().then(p => setPlayers(p || [])).catch(() => {});
     listMatches().then(m => setMatches(m || [])).catch(() => {});
+    listTournaments().then(t => setTournaments(t || [])).catch(() => {});
   }, []);
 
   const activeMatches = matches.filter(m => m.status === 'active');
@@ -110,9 +112,15 @@ export default function Home() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-5xl space-y-8">
-        <div className="text-center">
+        <div className="text-center space-y-3">
           <h1 className="text-4xl font-bold text-emerald-400">Darts Practice</h1>
           <p className="text-slate-400 mt-2">Train your skills against the bot or locally</p>
+          <button
+            onClick={() => navigate('/tournaments/new')}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-lg text-sm font-medium transition"
+          >
+            🏆 New Tournament
+          </button>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
@@ -449,11 +457,49 @@ export default function Home() {
                       </div>
                       <div className="flex items-center justify-between mt-1">
                         {m.winner_name && m.winner_name !== 'Unknown' && (
-                          <span className="text-emerald-400 text-xs font-bold">{m.winner_name} won the match</span>
+                          <span className="text-emerald-400 text-xs font-bold">
+                            {m.total_games > 1 && m.game_scores && m.player_ids
+                              ? (() => {
+                                  const scores = m.player_ids.map(id => m.game_scores![id] || 0);
+                                  return `${m.winner_name} won ${scores[0]} - ${scores[1] ?? 0}`;
+                                })()
+                              : `${m.winner_name} won the match`
+                            }
+                          </span>
                         )}
                         {(!m.winner_name || m.winner_name === 'Unknown') && (
                           <span className="text-slate-500 text-xs">Match completed</span>
                         )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Tournaments */}
+            {tournaments.length > 0 && (
+              <div className="bg-slate-800 rounded-xl p-6 space-y-3">
+                <h2 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Tournaments</h2>
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  {tournaments.map(t => (
+                    <button
+                      key={t.id}
+                      onClick={() => navigate(`/tournaments/${t.id}`)}
+                      className="w-full py-2 px-4 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-left transition"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-200 text-sm font-medium">{t.name}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${
+                          t.status === 'completed'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-amber-500/20 text-amber-300'
+                        }`}>
+                          {t.status}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 mt-1">
+                        {t.game_type.toUpperCase()} · {timeAgo(t.created_at)}
                       </div>
                     </button>
                   ))}
