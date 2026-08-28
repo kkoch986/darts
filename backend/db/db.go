@@ -76,6 +76,25 @@ func InitDB(path string) {
 			FOREIGN KEY (match_id) REFERENCES matches(id),
 			FOREIGN KEY (player_id) REFERENCES players(id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS tournaments (
+			id TEXT PRIMARY KEY,
+			name TEXT NOT NULL,
+			type TEXT NOT NULL,
+			game_type TEXT NOT NULL,
+			starting_score INTEGER DEFAULT 0,
+			match_length INTEGER NOT NULL,
+			status TEXT DEFAULT 'active',
+			bracket_json TEXT NOT NULL,
+			created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+		)`,
+		`CREATE TABLE IF NOT EXISTS tournament_matches (
+			tournament_id TEXT NOT NULL,
+			slot_id TEXT NOT NULL,
+			match_id TEXT NOT NULL,
+			PRIMARY KEY (tournament_id, slot_id),
+			FOREIGN KEY (tournament_id) REFERENCES tournaments(id),
+			FOREIGN KEY (match_id) REFERENCES matches(id)
+		)`,
 	}
 
 	for _, m := range migrations {
@@ -98,6 +117,10 @@ func InitDB(path string) {
 
 	// Ensure is_bot column exists on players (idempotent)
 	_, _ = DB.Exec("ALTER TABLE players ADD COLUMN is_bot BOOLEAN DEFAULT FALSE")
+
+	// Ensure winner_json and standings_json exist on tournaments (idempotent)
+	_, _ = DB.Exec("ALTER TABLE tournaments ADD COLUMN winner_json TEXT")
+	_, _ = DB.Exec("ALTER TABLE tournaments ADD COLUMN standings_json TEXT")
 
 	// Ensure match_states table exists (idempotent)
 	_, _ = DB.Exec(`CREATE TABLE IF NOT EXISTS match_states (

@@ -154,6 +154,50 @@ export interface AiThrowResult {
   error?: string;
 }
 
+export interface TournamentPlayer {
+  id: string;
+  name: string;
+  is_bot: boolean;
+  difficulty?: Persona;
+  seed?: number;
+}
+
+export interface BracketSlot {
+  id: string;
+  round: number;
+  position: number;
+  phase?: 'wb' | 'lb' | 'gf' | 'rr';
+  player1?: TournamentPlayer;
+  player2?: TournamentPlayer;
+  winner?: TournamentPlayer;
+  match_id?: string;
+  next_slot?: string;
+  loser_slot?: string;
+  reset_slot?: string;
+  status: 'pending' | 'active' | 'completed';
+}
+
+export interface TournamentStanding {
+  player: TournamentPlayer;
+  wins: number;
+  losses: number;
+}
+
+export interface Tournament {
+  id: string;
+  name: string;
+  type: 'single_elimination' | 'round_robin' | 'double_elimination';
+  game_type: GameType;
+  starting_score?: number;
+  match_length: number;
+  status: 'active' | 'completed';
+  players: TournamentPlayer[];
+  bracket: BracketSlot[];
+  standings?: TournamentStanding[];
+  winner?: TournamentPlayer;
+  created_at: string;
+}
+
 export interface ThrowResponse {
   state: GameState;
   error?: string;

@@ -60,6 +60,12 @@ func Setup() http.Handler {
 			r.Post("/checkout", handlers.StartCheckoutPractice)
 			r.Post("/checkout/{id}/throw", handlers.CheckoutPracticeThrow)
 		})
+
+		r.Route("/tournaments", func(r chi.Router) {
+			r.Post("/", handlers.CreateTournament)
+			r.Get("/", handlers.ListTournaments)
+			r.Get("/{id}", handlers.GetTournament)
+		})
 	})
 
 	return r

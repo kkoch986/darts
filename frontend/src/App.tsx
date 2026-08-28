@@ -6,6 +6,8 @@ import Game from './pages/Game';
 import Match from './pages/Match';
 import Stats from './pages/Stats';
 import Practice from './pages/Practice';
+import TournamentCreate from './pages/TournamentCreate';
+import Tournament from './pages/Tournament';
 
 export default function App() {
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -45,6 +47,9 @@ export default function App() {
               <Link to="/practice" className="text-slate-300 hover:text-white transition">
                 Practice
               </Link>
+              <Link to="/tournaments/new" className="text-slate-300 hover:text-white transition">
+                Tournament
+              </Link>
               <button
                 onClick={toggleFullscreen}
                 className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition"
@@ -63,6 +68,8 @@ export default function App() {
           <Route path="/match/:id" element={<Match />} />
           <Route path="/stats" element={<Stats />} />
           <Route path="/practice" element={<Practice />} />
+          <Route path="/tournaments/new" element={<TournamentCreate />} />
+          <Route path="/tournaments/:id" element={<Tournament />} />
         </Routes>
       </div>
     </BrowserRouter>
