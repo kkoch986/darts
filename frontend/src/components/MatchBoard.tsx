@@ -334,7 +334,10 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
       )}
 
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-        <div className="flex-1 min-w-0 space-y-4">
+        {/* On mobile `contents` lifts these children into the flex column above,
+            which gives the pinned scoreboard room to travel instead of trapping
+            it inside a box exactly as tall as the scoreboard itself. */}
+        <div className="contents lg:flex lg:flex-col lg:flex-1 lg:min-w-0 lg:gap-4">
           {match.status === 'completed' && (
             <div className="bg-emerald-900/40 border border-emerald-700 rounded-xl p-4 text-center space-y-1">
               <div className="text-emerald-400 font-bold text-sm uppercase tracking-wider">Match Complete</div>
@@ -372,7 +375,15 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
               )}
             </div>
           )}
-          <Scoreboard state={displayState} lastDarts={lastDarts} />
+          <div
+            className={
+              displayState.type === 'x01'
+                ? 'sticky top-0 z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
+                : undefined
+            }
+          >
+            <Scoreboard state={displayState} lastDarts={lastDarts} pin={displayState.type === 'x01'} />
+          </div>
           {match.status !== 'completed' && <StrategyAdvisor state={displayState} />}
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">

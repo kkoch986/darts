@@ -16,7 +16,9 @@ const MULTIPLIERS = [
 export default function SimpleScoring({ onSelect, gameType, cricketNumbers }: SimpleScoringProps) {
   const [selectedMultiplier, setSelectedMultiplier] = useState(0);
 
-  const allNumbers = [...BOARD_ORDER, 25] as number[];
+  // BOARD_ORDER is the physical clock order around the board, which is hard to
+  // scan while keying in scores — sort it into plain numerical order instead.
+  const allNumbers = ([...BOARD_ORDER, 25] as number[]).sort((a, b) => a - b);
   const numbers = gameType === 'cricket'
     ? allNumbers.filter(n => {
         const crickets = cricketNumbers || [20,19,18,17,16,15,25];

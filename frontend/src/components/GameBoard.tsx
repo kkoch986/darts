@@ -238,8 +238,14 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
 
       {/* Main game area: scoreboard + scoring input side by side */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <Scoreboard state={displayState} lastDarts={lastDarts} />
+        <div
+          className={
+            displayState.type === 'x01'
+              ? 'flex-1 min-w-0 sticky top-0 z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
+              : 'flex-1 min-w-0'
+          }
+        >
+          <Scoreboard state={displayState} lastDarts={lastDarts} pin={displayState.type === 'x01'} />
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
           <div className="w-full text-center text-sm text-slate-400">

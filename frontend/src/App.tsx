@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { Maximize, Minimize } from 'lucide-react';
+import { useWakeLock } from './lib/useWakeLock';
 import Home from './pages/Home';
 import Game from './pages/Game';
 import Match from './pages/Match';
@@ -17,6 +18,9 @@ export default function App() {
     document.addEventListener('fullscreenchange', handleChange);
     return () => document.removeEventListener('fullscreenchange', handleChange);
   }, []);
+
+  // Fullscreen is the single control for keeping the screen on.
+  useWakeLock(isFullscreen);
 
   const toggleFullscreen = async () => {
     try {
@@ -52,9 +56,14 @@ export default function App() {
               </Link>
               <button
                 onClick={toggleFullscreen}
-                className="p-1.5 text-slate-300 hover:text-white hover:bg-slate-700 rounded transition"
+                className={`p-1.5 rounded transition ${
+                  isFullscreen
+                    ? 'text-emerald-400 bg-slate-700'
+                    : 'text-slate-300 hover:text-white hover:bg-slate-700'
+                }`}
+                aria-pressed={isFullscreen}
                 aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-                title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                title={isFullscreen ? 'Exit fullscreen — screen can sleep again' : 'Enter fullscreen — keeps your screen awake'}
               >
                 {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>

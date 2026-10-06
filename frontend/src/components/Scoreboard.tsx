@@ -1,9 +1,12 @@
-import type { X01GameState, CricketGameState, GameState, X01Player, CricketPlayer } from '../lib/types';
+import type { X01GameState, CricketGameState, GameState, X01Player, CricketPlayer, ThrowRecord } from '../lib/types';
 import { CRICKET_NUMBERS } from '../lib/types';
 
 interface ScoreboardProps {
   state: GameState;
   lastDarts?: Record<string, string | null>;
+  // Renders a tighter, single-row-per-player layout for use in a pinned bar,
+  // so the remaining score stays readable while the scoring input is scrolled to.
+  pin?: boolean;
 }
 
 function lastThrowDisplay(player: X01Player | CricketPlayer, lastDart?: string | null): string | null {
@@ -15,8 +18,65 @@ function lastThrowDisplay(player: X01Player | CricketPlayer, lastDart?: string |
   return null;
 }
 
-function X01Scoreboard({ state, lastDarts }: { state: X01GameState; lastDarts?: Record<string, string | null> }) {
+function TurnChips({ darts, compact }: { darts: ThrowRecord[]; compact?: boolean }) {
+  if (!darts || darts.length === 0) return null;
+  return (
+    <div className="flex gap-1 flex-wrap">
+      {darts.map((d, di) => (
+        <span
+          key={di}
+          className={`font-mono bg-slate-600 rounded ${compact ? 'text-[11px] px-1.5 py-0.5' : 'text-xs px-1.5 py-0.5'}`}
+        >
+          {d.label} ({d.score})
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function X01Scoreboard({
+  state,
+  lastDarts,
+  pin,
+}: {
+  state: X01GameState;
+  lastDarts?: Record<string, string | null>;
+  pin?: boolean;
+}) {
   const currentPlayerIdx = state.current_player;
+
+  if (pin) {
+    return (
+      <div>
+        <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${state.players.length}, 1fr)` }}>
+          {state.players.map((p, i) => (
+            <div
+              key={p.id}
+              className={`rounded-lg px-2.5 py-1.5 transition ${
+                i === currentPlayerIdx
+                  ? 'bg-slate-700 ring-2 ring-emerald-500'
+                  : 'bg-slate-800/80'
+              }`}
+            >
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-bold text-xs truncate">{p.name}</span>
+                <span className="text-2xl font-mono font-bold leading-none">{p.score}</span>
+              </div>
+              {/* Reserved height so the pinned bar does not jump as darts land. */}
+              <div className="flex items-baseline justify-between gap-2 mt-0.5 min-h-[14px]">
+                <span className="text-[11px] text-emerald-400 font-mono">
+                  {p.turn_darts?.length ? `${p.turn_score} (${p.darts_used}/3)` : ''}
+                </span>
+              </div>
+              <div className="mt-1 min-h-[18px]">
+                <TurnChips darts={p.turn_darts} compact />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -40,11 +100,7 @@ function X01Scoreboard({ state, lastDarts }: { state: X01GameState; lastDarts?: 
             )}
             {p.turn_darts && p.turn_darts.length > 0 && (
               <div className="flex gap-1 justify-center mt-1">
-                {p.turn_darts.map((d, di) => (
-                  <span key={di} className="text-xs bg-slate-600 px-1.5 py-0.5 rounded">
-                    {d.label} ({d.score})
-                  </span>
-                ))}
+                <TurnChips darts={p.turn_darts} />
               </div>
             )}
             <div className="text-xs text-slate-500 mt-2 h-4">
@@ -145,9 +201,9 @@ function CricketScoreboard({ state, lastDarts }: { state: CricketGameState; last
   );
 }
 
-export default function Scoreboard({ state, lastDarts }: ScoreboardProps) {
+export default function Scoreboard({ state, lastDarts, pin }: ScoreboardProps) {
   if (state.type === 'x01') {
-    return <X01Scoreboard state={state as X01GameState} lastDarts={lastDarts} />;
+    return <X01Scoreboard state={state as X01GameState} lastDarts={lastDarts} pin={pin} />;
   }
   return <CricketScoreboard state={state as CricketGameState} lastDarts={lastDarts} />;
 }
