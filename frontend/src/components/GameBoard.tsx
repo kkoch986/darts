@@ -238,14 +238,8 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
 
       {/* Main game area: scoreboard + scoring input side by side */}
       <div className="flex flex-col lg:flex-row lg:items-start gap-4">
-        <div
-          className={
-            displayState.type === 'x01'
-              ? 'flex-1 min-w-0 sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
-              : 'flex-1 min-w-0'
-          }
-        >
-          <Scoreboard state={displayState} lastDarts={lastDarts} pin={displayState.type === 'x01'} />
+        <div className="flex-1 min-w-0 sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0">
+          <Scoreboard state={displayState} lastDarts={lastDarts} pin />
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
           <div className="w-full text-center text-sm text-slate-400">
@@ -304,13 +298,20 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
               </button>
             </div>
           )}
+
+          <div className="w-full lg:hidden">
+            <ThrowLog state={state} compact />
+          </div>
         </div>
       </div>
 
-      {/* Bottom section: heatmaps + throw log */}
+      {/* Bottom section: heatmaps + the full throw log, which sits above the
+          fold on desktop but is reduced to the last two turns on mobile. */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
         <PlayerHeatmap state={state} playerIndex={0} lastDarts={state.players[0]?.turn_darts} />
-        <ThrowLog state={state} />
+        <div className="hidden lg:contents">
+          <ThrowLog state={state} />
+        </div>
         {state.players.length > 1 && (
           <PlayerHeatmap state={state} playerIndex={1} lastDarts={state.players[1]?.turn_darts} />
         )}

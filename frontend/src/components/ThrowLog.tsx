@@ -11,9 +11,12 @@ function segmentLabel(seg: Segment): string {
 
 interface ThrowLogProps {
   state: GameState;
+  // Shows only the most recent turns at natural height, for placement directly
+  // under the scoring input where a fixed-height scroll box would be too much.
+  compact?: boolean;
 }
 
-function X01Log({ state }: { state: X01GameState }) {
+function X01Log({ state, limit }: { state: X01GameState; limit?: number }) {
   const turns: { player: string; darts: ThrowRecord[]; turnScore: number; round: number; order: number; remaining?: number }[] = [];
   let order = 0;
 
@@ -90,7 +93,7 @@ function X01Log({ state }: { state: X01GameState }) {
 
   return (
     <>
-      {unique.map((turn, i) => (
+      {(limit ? unique.slice(0, limit) : unique).map((turn, i) => (
         <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-slate-700/40">
           <span className="font-bold text-slate-300 w-20 truncate shrink-0">{turn.player}</span>
           <span className="text-slate-600 text-[10px] w-6 shrink-0">R{turn.round}</span>
@@ -112,7 +115,7 @@ function X01Log({ state }: { state: X01GameState }) {
   );
 }
 
-function CricketLog({ state }: { state: CricketGameState }) {
+function CricketLog({ state, limit }: { state: CricketGameState; limit?: number }) {
   const isCricketNumber = (val: number) => val >= 15 && val <= 20 || val === 25;
 
   const isScoring = (dart: ThrowRecord, playerIdx: number): boolean => {
@@ -193,7 +196,7 @@ function CricketLog({ state }: { state: CricketGameState }) {
 
   return (
     <>
-      {unique.map((turn, i) => {
+      {(limit ? unique.slice(0, limit) : unique).map((turn, i) => {
         let runningScore = 0;
         return (
           <div key={i} className="flex items-center gap-2 text-xs py-1.5 border-b border-slate-700/40">
@@ -231,22 +234,31 @@ function CricketLog({ state }: { state: CricketGameState }) {
   );
 }
 
-export default function ThrowLog({ state }: ThrowLogProps) {
+export default function ThrowLog({ state, compact }: ThrowLogProps) {
   const hasThrows = state.players.some(p => (p.history && p.history.length > 0) || (p.turn_darts && p.turn_darts.length > 0));
+  // Two turns covers both sides of the board, which is the point of the compact
+  // placement: reading back what the opponent just threw.
+  const limit = compact ? 2 : undefined;
+
+  const log =
+    state.type === 'x01'
+      ? <X01Log state={state as X01GameState} limit={limit} />
+      : <CricketLog state={state as CricketGameState} limit={limit} />;
+
+  if (compact) {
+    return (
+      <div className="bg-slate-800/80 rounded-xl p-3 w-full">
+        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-0.5">Last Throws</h3>
+        {hasThrows ? log : <div className="text-xs text-slate-600 text-center py-2">No throws yet</div>}
+      </div>
+    );
+  }
 
   return (
     <div className="bg-slate-800/80 rounded-xl p-4 flex-1 min-w-0 flex flex-col h-80 max-h-80">
       <h3 className="text-sm font-bold text-slate-300 mb-2">Throw History</h3>
       <div className="flex-1 overflow-y-auto space-y-0 min-h-0">
-        {hasThrows ? (
-          state.type === 'x01' ? (
-            <X01Log state={state as X01GameState} />
-          ) : (
-            <CricketLog state={state as CricketGameState} />
-          )
-        ) : (
-          <div className="text-xs text-slate-600 text-center py-4">No throws yet</div>
-        )}
+        {hasThrows ? log : <div className="text-xs text-slate-600 text-center py-4">No throws yet</div>}
       </div>
     </div>
   );

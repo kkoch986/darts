@@ -122,7 +122,15 @@ function marksDisplay(marks: number): string {
   return '-';
 }
 
-function CricketScoreboard({ state, lastDarts }: { state: CricketGameState; lastDarts?: Record<string, string | null> }) {
+function CricketScoreboard({
+  state,
+  lastDarts,
+  pin,
+}: {
+  state: CricketGameState;
+  lastDarts?: Record<string, string | null>;
+  pin?: boolean;
+}) {
   const currentPlayerIdx = state.current_player;
 
   const playerMPR = state.players.map(p => {
@@ -130,6 +138,52 @@ function CricketScoreboard({ state, lastDarts }: { state: CricketGameState; last
     const rounds = Math.max(1, state.round - 1);
     return totalMarks / rounds;
   });
+
+  // Transposed for a pinned bar: the marks table as seven columns is far taller
+  // than two rows, and players-as-rows is the usual way cricket is displayed.
+  if (pin) {
+    return (
+      <div
+        className="grid gap-x-1 gap-y-0.5"
+        style={{ gridTemplateColumns: `minmax(0,1fr) repeat(${CRICKET_NUMBERS.length}, minmax(0,1fr))` }}
+      >
+        <div />
+        {CRICKET_NUMBERS.map(n => (
+          <div key={n} className="text-center text-[10px] font-mono text-slate-500 leading-tight py-0.5">
+            {n === 25 ? 'B' : n}
+          </div>
+        ))}
+        {state.players.map((p, i) => {
+          const row = i === currentPlayerIdx ? 'bg-slate-700/60' : '';
+          return [
+            <div key={`${p.id}-name`} className={`flex items-baseline gap-1 min-w-0 rounded px-1 ${row}`}>
+              <span className="text-xs font-bold truncate">{p.name}</span>
+              <span className="text-xs font-mono text-emerald-400 ml-auto">{p.score}</span>
+            </div>,
+            ...CRICKET_NUMBERS.map(n => {
+              const marks = (p.marks || {})[n] || 0;
+              const allClosed = state.players.every(pp => ((pp.marks || {})[n] || 0) >= 3);
+              const tone = marks >= 3
+                ? 'text-red-400'
+                : marks > 0
+                ? 'text-yellow-400'
+                : 'text-slate-600';
+              return (
+                <div
+                  key={`${p.id}-${n}`}
+                  className={`text-center font-mono font-bold text-sm leading-tight py-0.5 rounded ${row} ${tone} ${
+                    allClosed ? 'opacity-40' : ''
+                  }`}
+                >
+                  {marksDisplay(marks)}
+                </div>
+              );
+            }),
+          ];
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-3">
@@ -205,5 +259,5 @@ export default function Scoreboard({ state, lastDarts, pin }: ScoreboardProps) {
   if (state.type === 'x01') {
     return <X01Scoreboard state={state as X01GameState} lastDarts={lastDarts} pin={pin} />;
   }
-  return <CricketScoreboard state={state as CricketGameState} lastDarts={lastDarts} />;
+  return <CricketScoreboard state={state as CricketGameState} lastDarts={lastDarts} pin={pin} />;
 }

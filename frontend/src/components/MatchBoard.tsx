@@ -390,70 +390,75 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
               )}
             </div>
           )}
-          <div
-            className={
-              displayState.type === 'x01'
-                ? 'sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
-                : undefined
-            }
-          >
-            <Scoreboard state={displayState} lastDarts={lastDarts} pin={displayState.type === 'x01'} />
+<div className="sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0">
+            <Scoreboard state={displayState} lastDarts={lastDarts} pin />
           </div>
-          {match.status !== 'completed' && <StrategyAdvisor state={displayState} />}
+          {match.status !== 'completed' && displayState.type === 'x01' && (
+            <StrategyAdvisor state={displayState} />
+          )}
         </div>
         <div className="flex flex-col items-center gap-3 lg:w-auto">
-          {statsPanel}
-          {match.status !== 'completed' && !viewingHistorical && (
-            <>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setInputMode('simple')}
-                  className={`px-4 py-2 rounded text-sm font-medium transition ${
-                    inputMode === 'simple'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  Simple
-                </button>
-                <button
-                  onClick={() => setInputMode('detailed')}
-                  className={`px-4 py-2 rounded text-sm font-medium transition ${
-                    inputMode === 'detailed'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                  }`}
-                >
-                  Board
-                </button>
-              </div>
-
-              {!isHumanTurn && !state.is_over && (
-                <div className="text-center text-slate-400 animate-pulse text-sm">
-                  Bot is thinking...
+          {/* On mobile the controls lead so the scoring input stays above the
+              fold; at lg both fall back to DOM order, stats first. */}
+          <div className="w-full order-1 lg:order-none">
+            {match.status !== 'completed' && !viewingHistorical && (
+              <>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setInputMode('simple')}
+                    className={`px-4 py-2 rounded text-sm font-medium transition ${
+                      inputMode === 'simple'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                  >
+                    Simple
+                  </button>
+                  <button
+                    onClick={() => setInputMode('detailed')}
+                    className={`px-4 py-2 rounded text-sm font-medium transition ${
+                      inputMode === 'detailed'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                    }`}
+                  >
+                    Board
+                  </button>
                 </div>
-              )}
 
-              {scoringInput}
+                {!isHumanTurn && !state.is_over && (
+                  <div className="text-center text-slate-400 animate-pulse text-sm">
+                    Bot is thinking...
+                  </div>
+                )}
 
-              <div className="flex gap-3">
-                <button
-                  onClick={handleUndo}
-                  disabled={loading || state.is_over || !isHumanTurn}
-                  className="px-5 py-3 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
-                >
-                  Undo
-                </button>
-                <button
-                  onClick={handleEndTurn}
-                  disabled={loading || state.is_over || !isHumanTurn}
-                  className="px-6 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
-                >
-                  End Turn
-                </button>
-              </div>
-            </>
-          )}
+                {scoringInput}
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleUndo}
+                    disabled={loading || state.is_over || !isHumanTurn}
+                    className="px-5 py-3 bg-slate-600 hover:bg-slate-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
+                  >
+                    Undo
+                  </button>
+                  <button
+                    onClick={handleEndTurn}
+                    disabled={loading || state.is_over || !isHumanTurn}
+                    className="px-6 py-3 bg-amber-600 hover:bg-amber-500 disabled:bg-slate-700 disabled:text-slate-500 rounded-lg font-bold transition"
+                  >
+                    End Turn
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="w-full order-2 lg:order-none lg:hidden">
+            <ThrowLog state={displayState} compact />
+          </div>
+
+          <div className="w-full order-3 lg:order-none">{statsPanel}</div>
         </div>
       </div>
 
@@ -464,7 +469,9 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
             <span className="text-slate-400 text-sm animate-pulse">Loading leg...</span>
           </div>
         ) : (
-          <ThrowLog state={displayState} />
+          <div className="hidden lg:contents">
+            <ThrowLog state={displayState} />
+          </div>
         )}
         {(displayState.players?.length ?? 0) > 1 && (
           <PlayerHeatmap state={displayState} playerIndex={1} lastDarts={displayState.players[1]?.turn_darts} />
