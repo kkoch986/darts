@@ -241,7 +241,7 @@ export default function GameBoard({ gameId, initialState, onStateChange }: GameB
         <div
           className={
             displayState.type === 'x01'
-              ? 'flex-1 min-w-0 sticky top-0 z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
+              ? 'flex-1 min-w-0 sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
               : 'flex-1 min-w-0'
           }
         >

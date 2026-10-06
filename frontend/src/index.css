@@ -21,3 +21,11 @@ body {
 .animate-flash {
   animation: flash 0.3s ease-out forwards;
 }
+
+/* The nav is hidden in fullscreen, so nothing offsets the top edge. Offset the
+   page instead, and expose the same value so a sticky bar can sit just below it
+   rather than pinned hard against the top of the screen. */
+html:fullscreen body {
+  --fs-top-offset: 0.5rem;
+  padding-top: var(--fs-top-offset);
+}

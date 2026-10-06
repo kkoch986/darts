@@ -184,35 +184,50 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
 
   const needed = Math.floor(match.total_games / 2) + 1;
 
-  const statsPanel = matchStats && match.total_games > 1 && (
+  // The round line and the stats share one box. Stats are absent for best-of-1
+  // and for legs still in progress, and the round line is absent once the match
+  // is done or a prior leg is being replayed, so either can carry the box alone.
+  const hasStats = matchStats !== null && match.total_games > 1;
+  const showRound = match.status !== 'completed' && !viewingHistorical;
+
+  const statsPanel = (hasStats || showRound) && (
     <div className="bg-slate-800 rounded-xl p-3 space-y-2 w-full">
-      <div className="flex items-center justify-between">
-        <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
-        <div className="text-[10px] text-slate-500">Best of {match.total_games} · First to {needed} legs</div>
-      </div>
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players?.length ?? 1}, 1fr)` }}>
-        {match.players.map(p => (
-          <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
-            <div className="text-xs text-slate-300 truncate">{p.name}</div>
-            <div className="text-lg font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
-            {displayState.type === 'x01' ? (
-              <>
-                <div className="text-[10px] text-slate-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
-                <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
-                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
-              </>
-            ) : (
-              <>
-                <div className="text-[10px] text-emerald-400">MPR {matchStats.mpr[p.id]?.toFixed(2) ?? '-'}</div>
-                <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
-              </>
-            )}
+      {matchStats && match.total_games > 1 && (
+        <>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-[10px] text-slate-400 uppercase tracking-wider">Match Stats</div>
+            <div className="text-[10px] text-slate-500">Best of {match.total_games} &middot; First to {needed} legs</div>
           </div>
-        ))}
-      </div>
-      {match.status === 'completed' && (
-        <div className="text-center text-emerald-400 font-bold text-xs">
-          Match Complete — {match.players.find(p => p.id === match.winner_id)?.name} wins
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${match.players?.length ?? 1}, 1fr)` }}>
+            {match.players.map(p => (
+              <div key={p.id} className="text-center bg-slate-700/50 rounded-lg p-1.5">
+                <div className="text-xs text-slate-300 truncate">{p.name}</div>
+                <div className="text-lg font-bold text-emerald-400">{match.game_scores[p.id] || 0}</div>
+                {displayState.type === 'x01' ? (
+                  <>
+                    <div className="text-[10px] text-slate-400">Avg {matchStats.averages[p.id]?.toFixed(1) ?? '-'}</div>
+                    <div className="text-[10px] text-slate-400">Co {matchStats.checkout_pct[p.id]?.toFixed(0) ?? 0}%</div>
+                    <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-[10px] text-emerald-400">MPR {matchStats.mpr[p.id]?.toFixed(2) ?? '-'}</div>
+                    <div className="text-[10px] text-slate-400">D/L {matchStats.darts_per_leg[p.id]?.toFixed(0) ?? '-'}</div>
+                  </>
+                )}
+              </div>
+            ))}
+          </div>
+          {match.status === 'completed' && (
+            <div className="text-center text-emerald-400 font-bold text-xs">
+              Match Complete &mdash; {match.players.find(p => p.id === match.winner_id)?.name} wins
+            </div>
+          )}
+        </>
+      )}
+      {showRound && (
+        <div className="text-center text-sm text-slate-400">
+          Round {displayState.round} &middot; {displayState.type === 'x01' ? `${(displayState as X01GameState).starting_score} game` : 'Cricket'}
         </div>
       )}
     </div>
@@ -378,7 +393,7 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
           <div
             className={
               displayState.type === 'x01'
-                ? 'sticky top-0 z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
+                ? 'sticky top-[var(--fs-top-offset,0px)] z-30 py-2 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800 lg:static lg:py-0 lg:bg-transparent lg:backdrop-blur-none lg:border-b-0'
                 : undefined
             }
           >
@@ -390,9 +405,6 @@ export default function MatchBoard({ matchId, initialMatch, onMatchChange }: Mat
           {statsPanel}
           {match.status !== 'completed' && !viewingHistorical && (
             <>
-              <div className="w-full text-center text-sm text-slate-400">
-                Round {displayState.round} &middot; {displayState.type === 'x01' ? `${(displayState as X01GameState).starting_score} game` : 'Cricket'}
-              </div>
               <div className="flex gap-2">
                 <button
                   onClick={() => setInputMode('simple')}
