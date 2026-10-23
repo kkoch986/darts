@@ -1,87 +1,119 @@
-package api
+package main
 
 import (
 	"net/http"
-
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
-
-	"github.com/ken/darts-backend/handlers"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	"github.com/yourusername/yourproject/db"
+	"time"
 )
 
-func Setup() http.Handler {
-	r := chi.NewRouter()
-
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(corsMiddleware)
-
-	r.Route("/api", func(r chi.Router) {
-		r.Route("/games", func(r chi.Router) {
-			r.Post("/", handlers.CreateGame)
-			r.Get("/", handlers.ListGames)
-			r.Get("/active", handlers.ListActiveGames)
-			r.Get("/history", handlers.ListGamesWithDetails)
-			r.Get("/{id}", handlers.GetGame)
-			r.Delete("/{id}", handlers.DeleteGame)
-			r.Post("/{id}/throw", handlers.Throw)
-			r.Post("/{id}/end-turn", handlers.EndTurn)
-			r.Post("/{id}/undo", handlers.UndoLastThrow)
-		})
-
-		r.Route("/players", func(r chi.Router) {
-			r.Post("/", handlers.CreatePlayer)
-			r.Get("/", handlers.ListPlayers)
-			r.Delete("/{id}", handlers.DeletePlayer)
-			r.Delete("/{id}/stats", handlers.ResetPlayerStats)
-		})
-
-		r.Route("/stats", func(r chi.Router) {
-			r.Get("/player/{id}", handlers.GetPlayerStats)
-			r.Get("/player/{id}/heatmap", handlers.GetPlayerHeatmap)
-			r.Get("/player/{id}/difficulty", handlers.GetPlayerDifficultyStats)
-			r.Get("/player/{id}/mpr", handlers.GetPlayerLifetimeMPR)
-			r.Get("/player/{id}/wins", handlers.GetPlayerWinsMatrix)
-			r.Get("/player/{id}/timeline", handlers.GetPlayerTimeline)
-		})
-
-		r.Route("/matches", func(r chi.Router) {
-			r.Post("/", handlers.CreateMatch)
-			r.Get("/", handlers.ListMatches)
-			r.Get("/{id}", handlers.GetMatchState)
-			r.Get("/{id}/stats", handlers.GetMatchStats)
-			r.Post("/{id}/throw", handlers.ThrowInMatch)
-			r.Post("/{id}/end-turn", handlers.EndTurnInMatch)
-			r.Post("/{id}/undo", handlers.UndoInMatch)
-			r.Delete("/{id}", handlers.DeleteMatch)
-		})
-
-		r.Route("/practice", func(r chi.Router) {
-			r.Post("/checkout", handlers.StartCheckoutPractice)
-			r.Post("/checkout/{id}/throw", handlers.CheckoutPracticeThrow)
-		})
-
-		r.Route("/tournaments", func(r chi.Router) {
-			r.Post("/", handlers.CreateTournament)
-			r.Get("/", handlers.ListTournaments)
-			r.Get("/{id}", handlers.GetTournament)
-		})
-	})
-
-	return r
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
+// authMiddleware adds JWT authentication to routes
+func authMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		// Extract token from Authorization header
+		authHeader := r.Header.Get("Authorization")
+		if len(authHeader) == 0 {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
+		// Parse token
+		token, err := jwt.Parse(authHeader, func(token *jwt.Token) (interface{}, error) {
+			// Validate signing method
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrInvalidKey
+			}
+			return []byte("your-secret-key"), nil
+		})
+		if err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+
+		// Check if token is valid
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			// Get user ID from claims
+			userId, ok := claims["user_id"].(float64)
+			if !ok {
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+
+			// Set user ID in request context
+			r = r.WithContext(context.WithValue(r.Context(), "user_id", int(userId)))
+		}
+		else {
+			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// ProfilesRoute handles profile-related requests
+func ProfilesRoute(r *mux.Router) {
+	// Protected routes
+	r.HandleFunc("/api/profiles", createProfile).Methods("POST")
+	r.HandleFunc("/api/profiles", getProfiles).Methods("GET")
+	r.HandleFunc("/api/profiles/{id}", getProfile).Methods("GET")
+	r.HandleFunc("/api/profiles/{id}", updateProfile).Methods("PUT")
+	r.HandleFunc("/api/profiles/{id}", deleteProfile).Methods("DELETE")
+}
+
+// createProfile handles POST /api/profiles
+func createProfile(w http.ResponseWriter, r *http.Request) {
+	// Implementation for creating a new profile
+}
+
+// getProfiles handles GET /api/profiles
+func getProfiles(w http.ResponseWriter, r *http.Request) {
+	// Implementation for retrieving all profiles
+}
+
+// getProfile handles GET /api/profiles/{id}
+func getProfile(w http.ResponseWriter, r *http.Request) {
+	// Implementation for retrieving a specific profile
+}
+
+// updateProfile handles PUT /api/profiles/{id}
+func updateProfile(w http.ResponseWriter, r *http.Request) {
+	// Implementation for updating a profile
+}
+
+// deleteProfile handles DELETE /api/profile,/{id}
+func deleteProfile(w http.ResponseWriter, r *http.Request) {
+	// Implementation for deleting a profile
+}
+
+// OpponentThrowRoute handles opponent throw requests
+func OpponentThrowRoute(r *mux.Router) {
+	r.HandleFunc("/api/opponent/throw", handleOpponentThrow).Methods("POST")
+}
+
+// handleOpponentThrow handles POST /api/opponent/throw
+func handleOpponentThrow(w http.ResponseWriter, r *http.Request) {
+	// Implementation for AI opponent throw logic
+}
+
+// LocalStorageImportRoute handles localStorage import
+func LocalStorageImportRoute(r *mux.Router) {
+	r.HandleFunc("/api/import/localstorage", importLocalStorage).Methods("POST")
+}
+
+// importLocalStorage handles POST /api/import/localstorage
+func importLocalStorage(w http.ResponseWriter, r *http.Request) {
+	// Implementation for importing localStorage data
+}
+
+func init() {
+	// Register routes with authentication
+	r := mux.NewRouter()
+		r.Use(authMiddleware)
+		ProfilesRoute(r)
+		OpponentThrowRoute(r)
+		LocalStorageImportRoute(r)
+		db.InitDB()
+		http.ListenAndServe(":8080", nil)
 }
