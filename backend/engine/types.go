@@ -2,8 +2,7 @@ package engine
 
 import (
 	"fmt"
-	"strconv"
-	"strings"
+	"math"
 )
 
 type SegmentType int
@@ -16,116 +15,136 @@ const (
 	Bullseye
 )
 
+func (t SegmentType) String() string {
+	switch t {
+	case Single:
+		return "single"
+	case Double:
+		return "double"
+	case Triple:
+		return "triple"
+	case OuterBull:
+		return "outer_bull"
+	case Bullseye:
+		return "bullseye"
+	default:
+		return "unknown"
+	}
+}
+
 type Segment struct {
-	Type       SegmentType `json:"type"`
-	Value      int         `json:"value"`
-	Multiplier int         `json:"multiplier"`
-	RawLabel   string      `json:"raw_label,omitempty"`
+	Type      SegmentType `json:"type"`
+	Value     int         `json:"value"`
+	Multiplier int        `json:"multiplier"`
+	RawLabel  string      `json:"raw_label,omitempty"`
 }
 
-var boardOrder = [20]int{20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5}
-
-func AllSegments() []Segment {
-	var segs []Segment
-	for _, v := range boardOrder {
-		segs = append(segs, Segment{Type: Single, Value: v, Multiplier: 1})
-		segs = append(segs, Segment{Type: Double, Value: v, Multiplier: 2})
-		segs = append(segs, Segment{Type: Triple, Value: v, Multiplier: 3})
-	}
-	segs = append(segs, Segment{Type: OuterBull, Value: 25, Multiplier: 1})
-	segs = append(segs, Segment{Type: Bullseye, Value: 25, Multiplier: 2})
-	return segs
-}
-
-func SegmentScore(s Segment) int {
-	return s.Value * s.Multiplier
-}
-
-func SegmentLabel(s Segment) string {
-	if s.Value == 0 {
-		return "Miss"
-	}
+func (s Segment) String() string {
 	switch s.Type {
+	case Single:
+		return fmt.Sprintf("%d", s.Value)
 	case Double:
 		return fmt.Sprintf("D%d", s.Value)
 	case Triple:
 		return fmt.Sprintf("T%d", s.Value)
 	case OuterBull:
-		return "SB"
+		return "25"
 	case Bullseye:
-		return "DB"
+		return "50"
 	default:
-		return strconv.Itoa(s.Value)
+		return ""
 	}
 }
 
-func ParseSegment(label string) (Segment, error) {
-	original := strings.TrimSpace(label)
-	label = strings.ToUpper(original)
-
-	if label == "MISS" || label == "0" || label == "NO SCORE" {
-		return Segment{Type: Single, Value: 0, Multiplier: 1, RawLabel: "MISS"}, nil
-	}
-
-	if label == "DB" || label == "D25" {
-		return Segment{Type: Bullseye, Value: 25, Multiplier: 2, RawLabel: "DB"}, nil
-	}
-	if label == "SB" || label == "S25" || label == "BULL" {
-		return Segment{Type: OuterBull, Value: 25, Multiplier: 1, RawLabel: "SB"}, nil
-	}
-
-	if strings.HasPrefix(label, "D") {
-		v, err := strconv.Atoi(label[1:])
-		if err != nil {
-			return Segment{}, fmt.Errorf("invalid segment: %s", label)
-		}
-		if v < 1 || v > 20 {
-			return Segment{}, fmt.Errorf("invalid segment: %s", label)
-		}
-		return Segment{Type: Double, Value: v, Multiplier: 2, RawLabel: fmt.Sprintf("D%d", v)}, nil
-	}
-
-	if strings.HasPrefix(label, "T") {
-		v, err := strconv.Atoi(label[1:])
-		if err != nil {
-			return Segment{}, fmt.Errorf("invalid segment: %s", label)
-		}
-		if v < 1 || v > 20 {
-			return Segment{}, fmt.Errorf("invalid segment: %s", label)
-		}
-		return Segment{Type: Triple, Value: v, Multiplier: 3, RawLabel: fmt.Sprintf("T%d", v)}, nil
-	}
-
-	clean := strings.TrimPrefix(label, "S")
-	v, err := strconv.Atoi(clean)
-	if err != nil {
-		return Segment{}, fmt.Errorf("invalid segment: %s", label)
-	}
-	if v < 1 || v > 20 {
-		return Segment{}, fmt.Errorf("invalid segment: %s", label)
-	}
-
-	// Preserve S prefix if user sent it (inner single), otherwise plain number (outer single)
-	raw := fmt.Sprintf("%d", v)
-	if strings.HasPrefix(label, "S") {
-		raw = fmt.Sprintf("S%d", v)
-	}
-	return Segment{Type: Single, Value: v, Multiplier: 1, RawLabel: raw}, nil
-}
-
-func IsCricketNumber(v int) bool {
-	return v >= 15 && v <= 20 || v == 25
-}
-
-func MarksForSegment(s Segment) int {
-	if !IsCricketNumber(s.Value) {
+func SegmentScore(seg Segment) int {
+	switch seg.Type {
+	case Single:
+		return seg.Value
+	case Double:
+		return seg.Value * 2
+	case Triple:
+		return seg.Value * 3
+	case OuterBull:
+		return 25
+	case Bullseye:
+		return 50
+	default:
 		return 0
 	}
-	if s.Value == 25 {
-		if s.Type == Bullseye {
-			return 2
+}
+
+func SegmentLabel(seg Segment) string {
+	switch seg.Type {
+	case Single:
+		if seg.Value == 25 {
+			return "25"
 		}
-		return 1
+		return fmt.Sprintf("%d", seg.Value)
+	case Double:
+		return fmt.Sprintf("D%d", seg.Value)
+	case Triple:
+		return fmt.Sprintf("T%d", seg.Value)
+	case OuterBull:
+		return "25"
+	case Bullseye:
+		return "50"
+	default:
+		return ""
 	}
-	return s.Multiplier
+}
+
+func IsCricketNumber(val int) bool {
+	for _, n := range CricketNumbers {
+		if n == val {
+			return true
+		}
+	}
+	return false
+}
+
+type ThrowRecord struct {
+	Segment     Segment `json:"segment"`
+	Label       string  `json:"label"`
+	Score       int     `json:"score"`
+	Round       int     `json:"round"`
+	DartNum     int     `json:"dart_num"`
+	ExtraScore  int     `json:"extra_score,omitempty"`
+}
+
+type GameStats struct {
+	TotalScore   int            `json:"total_score"`
+	ThrowCount   int            `json:"throw_count"`
+	RowCount     int            `json:"row_count"`
+	SegmentHits  map[string]int `json:"segment_hits"`
+	TypeHits     map[string]int `json:"type_hits"`
+}
+
+func NewGameStats() *GameStats {
+	return &GameStats{
+		TotalScore:  0,
+		ThrowCount:  0,
+		RowCount:    0,
+		SegmentHits: make(map[string]int),
+		TypeHits:    make(map[string]int),
+	}
+}
+
+func (gs *GameStats) RecordThrow(record ThrowRecord) {
+	gs.ThrowCount++
+	gs.TotalScore += record.Score
+	if record.Label != "" {
+		gs.SegmentHits[record.Label]++
+	}
+	typeName := record.Segment.Type.String()
+	gs.TypeHits[typeName]++
+	if record.DartNum == 1 {
+		gs.RowCount++
+	}
+}
+
+func (gs *GameStats) Accuracy() float64 {
+	if gs.ThrowCount == 0 {
+		return 0.0
+	}
+	return math.Round(float64(gs.ThrowCount-gs.SegmentHits[""]) / float64(gs.ThrowCount) * 100)
 }
