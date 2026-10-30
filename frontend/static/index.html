@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Darts — Home</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="description" content="Practice darts your way and track your form over time.">
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* OD-LAYOUT-PRIMITIVES v1 — structure only: display, flex/grid, overflow, wrapping, ratio, geometry.
+   Put this @layer first; product CSS outside the layer always wins. */
+@layer od-layout {
+  :where(.od-stack,.od-row,.od-row-top,.od-cluster,.od-grid,.od-field,.od-stat,.od-cell,.od-tile) > :where(*) { min-width: 0; }
+
+  /* containers */
+  .od-stack   { display: flex; flex-direction: column; gap: var(--od-gap, 8px); }
+  .od-row     { display: flex; align-items: center; gap: var(--od-gap, 8px); }
+  .od-row-top { display: flex; align-items: flex-start; gap: var(--od-gap, 8px); }
+  .od-cluster { display: flex; flex-wrap: wrap; align-items: center; gap: var(--od-gap, 8px); }
+  .od-fill    { flex: 1 1 0; min-width: 0; }
+  .od-fixed   { flex: none; }
+  .od-grid    { display: grid; gap: var(--od-gap, 12px); grid-template-columns: repeat(var(--od-cols, 3), minmax(0, 1fr)); }
+
+  /* stacked information: each piece is its own line — never sibling inline spans */
+  .od-stat, .od-field, .od-cell { display: grid; gap: var(--od-gap, 2px); }
+  :where(.od-stat,.od-field,.od-cell) > :where(*) { display: block; }
+  .od-tile { display: grid; grid-template-rows: auto 1fr; }
+  :where(.od-tile) > :where(*) { display: block; }
+
+  /* media keeps its intrinsic ratio by default; never a distorted or cropped
+     cover by accident. height:auto lets the ratio win over an <img height="…">
+     attribute. Cropping to a uniform box is an explicit opt-in: set --od-ratio
+     AND add .od-media-cover together (per the core rule, only where a crop is
+     deliberate — tile thumbs, decorative fills — never on full-frame content). */
+  .od-media { display: block; width: 100%; height: auto; aspect-ratio: var(--od-ratio, auto); }
+  .od-media-cover { object-fit: cover; }
+
+  /* functional inline SVG icons opt into bounded geometry; content SVGs keep their own */
+  .od-icon { display: inline-block; inline-size: var(--od-icon-size, 1em); block-size: var(--od-icon-size, 1em); flex: none; }
+
+  /* data text only — authored copy is rewritten to its budget instead */
+  .od-truncate { display: block; max-width: 100%; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .od-clamp-2, .od-clamp-3 { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+  .od-clamp-2 { -webkit-line-clamp: 2; }
+  .od-clamp-3 { -webkit-line-clamp: 3; }
+  .od-lines-2 { min-height: calc(2 * 1.4em); }   /* block-level reservation for a shared baseline */
+  .od-nowrap  { white-space: nowrap; }           /* 数字+单位 · 价格+起 · 日期+星期 */
+  .od-keep    { word-break: keep-all; overflow-wrap: anywhere; } /* CJK labels break at spaces / <wbr> first */
+
+  /* screen skeleton (optional): bars take their own space, the middle scrolls — no padding guessed for chrome */
+  .od-screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; }
+  .od-scroll { overflow-y: auto; overscroll-behavior: contain; min-height: 0; }
+
+  /* horizontal rail: the next item peeks at the edge; trailing room survives overflow */
+  .od-rail { display: flex; gap: var(--od-gap, 8px); overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none;
+             padding-inline: var(--od-rail-pad, 16px); scroll-padding-inline: var(--od-rail-pad, 16px); }
+  .od-rail::-webkit-scrollbar { display: none; }
+  :where(.od-rail) > :where(*) { flex: none; scroll-snap-align: start; }
+  :where(.od-rail) > :where(:last-child) { margin-inline-end: var(--od-rail-pad, 16px); }
+
+  .od-spacer { flex: none; visibility: hidden; pointer-events: none; }
+  .od-touch  { min-width: 44px; min-height: 44px; }
+}
+/* /OD-LAYOUT-PRIMITIVES v1 */
+</style>
+<link rel="stylesheet" href="styles.css?v=25">
+</head>
+<body>
+<a class="skiplink" href="#main">Skip to content</a>
+
+<header class="appbar">
+  <div class="appbar__inner">
+    <a class="brand" href="#" aria-label="Darts home">
+      <svg class="brand__mark" width="26" height="26" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="16" cy="16" r="9" fill="none" stroke="currentColor" stroke-width="2" opacity=".75"/>
+        <circle cx="16" cy="16" r="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        <circle cx="16" cy="16" r="1.6" fill="currentColor"/>
+        <path d="M16 1v6M16 25v6M1 16h6M25 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="brand__name">Darts</span>
+    </a>
+
+    <nav class="topnav" aria-label="Primary">
+      <a class="topnav__link is-active" href="#/" data-nav="play" aria-current="page">Play</a>
+      <a class="topnav__link" href="#/practice" data-nav="practice">Practice</a>
+      <a class="topnav__link" href="#/stats" data-nav="stats">Stats</a>
+    </nav>
+
+    <span class="syncchip" id="sync-status" data-state="idle" role="status" aria-live="polite">
+      <span class="syncchip__dot" aria-hidden="true"></span>
+      <span class="syncchip__label">Local</span>
+    </span>
+
+    <button type="button" class="profile" id="pf-chip" aria-haspopup="dialog" aria-label="Switch profile">
+      <span class="profile__badge" id="pf-chip-badge" aria-hidden="true">P</span>
+      <span class="profile__name" id="pf-chip-name">Player</span>
+      <svg class="profile__caret od-icon" style="--od-icon-size:0.9rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="main" class="page" tabindex="-1">
+
+  <section class="hero" aria-labelledby="hero-title">
+    <p class="hero__eyebrow" id="hero-date">Today</p>
+    <h1 class="hero__title" id="hero-title">Good evening</h1>
+    <p class="hero__sub" id="home-sub">Start a match or practice session to build your history.</p>
+
+    <div class="statstrip od-grid" role="group" aria-label="Your form at a glance">
+      <div class="od-stat">
+        <span class="stat__value" id="home-avg">—</span>
+        <span class="stat__label">Best 3-dart avg</span>
+        <span class="stat__delta stat__delta--flat" id="home-avg-note">No matches yet</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="home-checkout">—</span>
+        <span class="stat__label">Fastest checkout</span>
+        <span class="stat__delta stat__delta--flat" id="home-checkout-note">No checkouts yet</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="home-results">—</span>
+        <span class="stat__label">Results logged</span>
+        <span class="stat__delta stat__delta--flat" id="home-results-note">Start a session</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="home-grid">
+
+    <!-- ============ START A GAME ============ -->
+    <section class="panel panel--start" aria-labelledby="start-title">
+      <div class="panel__head">
+        <h2 class="panel__title" id="start-title">Start a game</h2>
+      </div>
+
+      <div class="seg seg--mode" role="group" aria-label="Game or practice">
+        <button type="button" class="seg__btn is-active" data-mode="match" aria-pressed="true">Match</button>
+        <button type="button" class="seg__btn" data-mode="practice" aria-pressed="false">Practice</button>
+      </div>
+
+      <!-- MATCH -->
+      <div class="pane" data-pane="match">
+        <div class="field">
+          <span class="field__label" id="lbl-game">Game type</span>
+          <div class="seg" role="group" aria-labelledby="lbl-game">
+            <button type="button" class="seg__btn is-active" data-game="01" aria-pressed="true">01</button>
+            <button type="button" class="seg__btn" data-game="cricket" aria-pressed="false">Cricket</button>
+            <button type="button" class="seg__btn" data-game="atw" aria-pressed="false">Around the world</button>
+          </div>
+        </div>
+
+        <div class="field" data-when="01">
+          <span class="field__label" id="lbl-score">Starting score</span>
+          <div class="seg seg--4" role="group" aria-labelledby="lbl-score">
+            <button type="button" class="seg__btn" data-score="101" aria-pressed="false">101</button>
+            <button type="button" class="seg__btn" data-score="301" aria-pressed="false">301</button>
+            <button type="button" class="seg__btn is-active" data-score="501" aria-pressed="true">501</button>
+          </div>
+        </div>
+
+        <div class="field" data-when="atw" hidden>
+          <span class="field__label" id="lbl-atwmarks">Marks per target</span>
+          <div class="seg" role="group" aria-labelledby="lbl-atwmarks">
+            <button type="button" class="seg__btn is-active" data-atwmarks="1" aria-pressed="true">One</button>
+            <button type="button" class="seg__btn" data-atwmarks="3" aria-pressed="false">Three</button>
+          </div>
+          <p class="field__hint">Three marks per number: single = 1, double = 2, treble = 3. Bull = 1 or 2. Extra marks don't carry over.</p>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Players</span>
+          <div class="slots" id="slots"></div>
+        </div>
+
+        <div class="field">
+          <span class="field__label" id="lbl-len">Match length</span>
+          <div class="seg seg--4" role="group" aria-labelledby="lbl-len">
+            <button type="button" class="seg__btn is-active" data-len="1" aria-pressed="true">Single</button>
+            <button type="button" class="seg__btn" data-len="3" aria-pressed="false">Best of 3</button>
+            <button type="button" class="seg__btn" data-len="5" aria-pressed="false">Best of 5</button>
+            <button type="button" class="seg__btn" data-len="7" aria-pressed="false">Best of 7</button>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Throws first</span>
+          <div class="chips" id="firstthrow"></div>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="start-match">Start match</button>
+      </div>
+
+      <!-- PRACTICE -->
+      <div class="pane" data-pane="practice" hidden>
+        <div class="field">
+          <span class="field__label" id="lbl-ptype">Practice mode</span>
+          <div class="seg" role="group" aria-labelledby="lbl-ptype">
+            <button type="button" class="seg__btn is-active" data-practice="target" aria-pressed="true">Target</button>
+            <button type="button" class="seg__btn" data-practice="checkout" aria-pressed="false">Checkout</button>
+            <button type="button" class="seg__btn" data-practice="game9" aria-pressed="false">Game of 9</button>
+          </div>
+        </div>
+
+        <div class="field" data-pwhen="target">
+          <label class="field__label" for="target-select">Focus segment</label>
+          <div class="inline">
+            <select id="target-select" class="select">
+              <option value="T20" selected>Treble 20 (T20)</option>
+              <option value="D20">Double 20 (D20)</option>
+              <option value="T19">Treble 19 (T19)</option>
+              <option value="D16">Double 16 (D16)</option>
+              <option value="D10">Double 10 (D10)</option>
+              <option value="SB">Single bull (25)</option>
+              <option value="DB">Double bull (50)</option>
+            </select>
+            <button type="button" class="btn btn--ghost" id="random-target">Random</button>
+          </div>
+          <span class="field__hint">Train one exact segment. Plain numbers count either single.</span>
+        </div>
+
+        <div class="field" data-pwhen="target">
+          <span class="field__label" id="lbl-darts">Darts</span>
+          <div class="seg seg--4" role="group" aria-labelledby="lbl-darts">
+            <button type="button" class="seg__btn is-active" data-darts="20" aria-pressed="true">20</button>
+            <button type="button" class="seg__btn" data-darts="30" aria-pressed="false">30</button>
+            <button type="button" class="seg__btn" data-darts="50" aria-pressed="false">50</button>
+            <button type="button" class="seg__btn" data-darts="100" aria-pressed="false">100</button>
+          </div>
+        </div>
+
+        <div class="field" data-pwhen="checkout" hidden>
+          <label class="field__label" for="checkout-select">Checkout score</label>
+          <div class="inline">
+            <select id="checkout-select" class="select">
+              <option value="170">170</option>
+              <option value="121">121</option>
+              <option value="100">100</option>
+              <option value="80">80</option>
+              <option value="62">62</option>
+              <option value="50">50</option>
+              <option value="40" selected>40</option>
+              <option value="32">32</option>
+              <option value="20">20</option>
+            </select>
+            <button type="button" class="btn btn--ghost" id="random-checkout">Random</button>
+          </div>
+          <span class="field__hint">Clear the score in three darts or fewer. Finish on a double or double bull.</span>
+        </div>
+
+        <div class="field" data-pwhen="game9" hidden>
+          <span class="field__label" id="lbl-g9variant">Board order</span>
+          <div class="seg" role="group" aria-labelledby="lbl-g9variant">
+            <button type="button" class="seg__btn is-active" data-g9variant="cricket" aria-pressed="true">Cricket · 20→15</button>
+            <button type="button" class="seg__btn" data-g9variant="501" aria-pressed="false">501 · 1→20</button>
+          </div>
+          <span class="field__hint">9 consecutive hits per number — the full pie counts. Bull: 1 per round for 3 rounds in a row.</span>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="start-practice">Start practice</button>
+      </div>
+    </section>
+
+    <div class="home-col">
+
+      <!-- ============ ACTIVE ============ -->
+      <section class="panel" aria-labelledby="active-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="active-title">In progress</h2>
+          <span class="panel__count" id="active-count" hidden></span>
+        </div>
+        <div class="active-list" id="active-list"></div>
+      </section>
+
+      <!-- ============ RECENT ============ -->
+      <section class="panel" aria-labelledby="recent-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="recent-title">Recent results</h2>
+          <a class="panel__link" href="#" data-soon="Full results">View all</a>
+        </div>
+        <div class="empty" id="recent-empty" hidden>
+          <span class="empty__icon">
+            <svg class="od-icon" style="--od-icon-size:2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <span class="empty__title">No results yet</span>
+          <span class="empty__body">Finish a match or practice session and it lands here with this profile's history.</span>
+        </div>
+        <div class="tablewrap" id="recent-wrap">
+          <table class="rtable">
+            <caption class="sr-only">Your ten most recent matches and practice sessions</caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Type</th>
+                <th scope="col">Matchup</th>
+                <th scope="col">Result</th>
+                <th scope="col" class="ta-right">Key stat</th>
+              </tr>
+            </thead>
+            <tbody id="recent-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<!-- ============ PRACTICE HUB — practice page ============ -->
+<section class="page hub" id="hub" hidden tabindex="-1" aria-labelledby="hub-title">
+  <section class="hero" aria-labelledby="hub-title">
+    <p class="hero__eyebrow">Practice</p>
+    <h1 class="hero__title" id="hub-title">Sharpen one thing at a time</h1>
+    <p class="hero__sub">Rehearse a single segment until it's automatic, drill checkouts until the routes come without thinking, or run the Game of 9 for full-pie grouping.</p>
+
+    <div class="statstrip od-grid" role="group" aria-label="Your practice bests">
+      <div class="od-stat">
+        <span class="stat__value" id="best-hit">—</span>
+        <span class="stat__label">Best hit rate</span>
+        <span class="stat__delta stat__delta--flat" id="best-hit-note">No sessions yet</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="best-checkout">—</span>
+        <span class="stat__label">Fastest checkout</span>
+        <span class="stat__delta stat__delta--flat" id="best-checkout-note">No sessions yet</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="best-sessions">—</span>
+        <span class="stat__label">Sessions logged</span>
+        <span class="stat__delta stat__delta--flat" id="best-sessions-note">In your recent results</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="home-grid">
+
+    <!-- ============ QUICK START ============ -->
+    <section class="panel panel--start" aria-labelledby="hub-start-title">
+      <div class="panel__head">
+        <h2 class="panel__title" id="hub-start-title">Quick start</h2>
+      </div>
+
+      <div class="seg seg--mode" role="group" aria-label="Practice mode">
+        <button type="button" class="seg__btn is-active" data-hubmode="target" aria-pressed="true">Target</button>
+        <button type="button" class="seg__btn" data-hubmode="checkout" aria-pressed="false">Checkout</button>
+        <button type="button" class="seg__btn" data-hubmode="game9" aria-pressed="false">Game of 9</button>
+      </div>
+
+      <div class="pane" data-hubpane="target">
+        <div class="field">
+          <label class="field__label" for="hub-target-select">Focus segment</label>
+          <div class="inline">
+            <select id="hub-target-select" class="select">
+              <option value="T20" selected>Treble 20 (T20)</option>
+              <option value="D20">Double 20 (D20)</option>
+              <option value="T19">Treble 19 (T19)</option>
+              <option value="D16">Double 16 (D16)</option>
+              <option value="D10">Double 10 (D10)</option>
+              <option value="SB">Single bull (25)</option>
+              <option value="DB">Double bull (50)</option>
+            </select>
+            <button type="button" class="btn btn--ghost" id="hub-random-target">Random</button>
+          </div>
+          <span class="field__hint">Train one exact segment. Plain numbers count either single.</span>
+        </div>
+
+        <div class="field">
+          <span class="field__label" id="hub-lbl-darts">Darts</span>
+          <div class="seg seg--4" role="group" aria-labelledby="hub-lbl-darts">
+            <button type="button" class="seg__btn is-active" data-hubdarts="20" aria-pressed="true">20</button>
+            <button type="button" class="seg__btn" data-hubdarts="30" aria-pressed="false">30</button>
+            <button type="button" class="seg__btn" data-hubdarts="50" aria-pressed="false">50</button>
+            <button type="button" class="seg__btn" data-hubdarts="100" aria-pressed="false">100</button>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="hub-start-target">Start practice</button>
+      </div>
+
+      <div class="pane" data-hubpane="checkout" hidden>
+        <div class="field">
+          <label class="field__label" for="hub-checkout-select">Checkout score</label>
+          <div class="inline">
+            <select id="hub-checkout-select" class="select">
+              <option value="170">170</option>
+              <option value="121">121</option>
+              <option value="100">100</option>
+              <option value="80">80</option>
+              <option value="62">62</option>
+              <option value="50">50</option>
+              <option value="40" selected>40</option>
+              <option value="32">32</option>
+              <option value="20">20</option>
+            </select>
+            <button type="button" class="btn btn--ghost" id="hub-random-checkout">Random</button>
+          </div>
+          <span class="field__hint">Clear the score in three darts or fewer. Finish on a double or double bull.</span>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="hub-start-checkout">Start practice</button>
+      </div>
+
+      <div class="pane" data-hubpane="game9" hidden>
+        <div class="field">
+          <span class="field__label" id="hub-lbl-g9variant">Board order</span>
+          <div class="seg" role="group" aria-labelledby="hub-lbl-g9variant">
+            <button type="button" class="seg__btn is-active" data-hubg9variant="cricket" aria-pressed="true">Cricket · 20→15</button>
+            <button type="button" class="seg__btn" data-hubg9variant="501" aria-pressed="false">501 · 1→20</button>
+          </div>
+          <span class="field__hint">9 consecutive hits per number — the full pie counts. Bull: 1 per round for 3 rounds in a row.</span>
+        </div>
+
+        <button type="button" class="btn btn--primary btn--block" id="hub-start-game9">Start practice</button>
+      </div>
+    </section>
+
+    <div class="home-col">
+
+      <!-- ============ IN PROGRESS (practice only) ============ -->
+      <section class="panel" aria-labelledby="hub-active-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="hub-active-title">In progress</h2>
+          <span class="panel__count" id="hub-active-count" hidden></span>
+        </div>
+        <div class="active-list" id="hub-active-list"></div>
+      </section>
+
+      <!-- ============ RECENT PRACTICE ============ -->
+      <section class="panel" aria-labelledby="hub-recent-title">
+        <div class="panel__head">
+          <h2 class="panel__title" id="hub-recent-title">Recent practice</h2>
+        </div>
+        <div class="empty" id="hub-recent-empty" hidden>
+          <span class="empty__icon">
+            <svg class="od-icon" style="--od-icon-size:2rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+          </span>
+          <span class="empty__title">Nothing logged yet</span>
+          <span class="empty__body">Finish a target, checkout, or Game of 9 session and it lands here with your hit rate, dart count, or cleared targets.</span>
+        </div>
+        <div class="tablewrap" id="hub-recent-wrap">
+          <table class="rtable">
+            <caption class="sr-only">Your recent practice sessions</caption>
+            <thead>
+              <tr>
+                <th scope="col">When</th>
+                <th scope="col">Mode</th>
+                <th scope="col">Session</th>
+                <th scope="col">Result</th>
+                <th scope="col" class="ta-right">Key stat</th>
+              </tr>
+            </thead>
+            <tbody id="hub-recent-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS ============ -->
+<section class="page stats" id="stats" hidden tabindex="-1" aria-labelledby="stats-title">
+  <section class="hero" aria-labelledby="stats-title">
+    <div class="pf">
+      <span class="pf__avatar" id="pf-avatar" aria-hidden="true">P</span>
+      <div class="pf__id">
+        <p class="hero__eyebrow">Profile &amp; stats</p>
+        <h1 class="pf__name" id="stats-title">Player</h1>
+        <p class="pf__sub" id="pf-sub">Your numbers, one place</p>
+      </div>
+      <div class="pf__actions">
+        <button type="button" class="iconbtn pf__switch" id="pf-switch" aria-haspopup="dialog" aria-label="Switch profile">
+          <svg class="od-icon" style="--od-icon-size:1.15rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </button>
+        <button type="button" class="iconbtn pf__edit" id="pf-edit" aria-label="Edit display name">
+          <svg class="od-icon" style="--od-icon-size:1.1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="statstrip statstrip--4 od-grid" role="group" aria-label="Your stats at a glance">
+      <div class="od-stat">
+        <span class="stat__value" id="st-matches">—</span>
+        <span class="stat__label">Matches logged</span>
+        <span class="stat__delta stat__delta--flat" id="st-matches-note">01, Cricket and Around the world</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="st-practice">—</span>
+        <span class="stat__label">Practice sessions</span>
+        <span class="stat__delta stat__delta--flat" id="st-practice-note">Target, Checkout and Game of 9</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="st-avg">—</span>
+        <span class="stat__label">Best 3-dart avg</span>
+        <span class="stat__delta stat__delta--flat" id="st-avg-note">No 01 games yet</span>
+      </div>
+      <div class="od-stat">
+        <span class="stat__value" id="st-rate">—</span>
+        <span class="stat__label">Best Target rate</span>
+        <span class="stat__delta stat__delta--flat" id="st-rate-note">No Target sessions yet</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats-grid">
+
+    <h2 class="stats-group" id="stats-match-group">Match play</h2>
+
+    <!-- ============ 01 ============ -->
+    <section class="panel stats-card" aria-labelledby="st-01-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-01-title">01 · 3-dart average</h3>
+      </div>
+      <div class="empty" id="st-01-empty" hidden>
+        <span class="empty__title">No 01 matches yet</span>
+        <span class="empty__body">Finish an 01 match to start your average history.</span>
+      </div>
+      <div class="stats-card__body" id="st-01-body" hidden>
+        <dl class="gamefacts">
+          <div><dt>Best</dt><dd id="st-01-best">—</dd></div>
+          <div><dt>Average</dt><dd id="st-01-avg">—</dd></div>
+        </dl>
+        <div class="trend" id="st-01-chart"></div>
+        <p class="trend__hint" id="st-01-hint" hidden>Plotted by completion date, oldest to newest.</p>
+      </div>
+    </section>
+
+    <!-- ============ CRICKET ============ -->
+    <section class="panel stats-card" aria-labelledby="st-cricket-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-cricket-title">Cricket · marks per round</h3>
+      </div>
+      <div class="empty" id="st-cricket-empty" hidden>
+        <span class="empty__title">No Cricket matches yet</span>
+        <span class="empty__body">Finish a Cricket match to see your marks per round.</span>
+      </div>
+      <div class="stats-card__body" id="st-cricket-body" hidden>
+        <dl class="gamefacts">
+          <div><dt>Best</dt><dd id="st-cricket-best">—</dd></div>
+          <div><dt>Average</dt><dd id="st-cricket-avg">—</dd></div>
+        </dl>
+        <div class="trend" id="st-cricket-chart"></div>
+        <p class="trend__hint" id="st-cricket-hint" hidden>MPR by completion date, oldest to newest.</p>
+      </div>
+    </section>
+
+    <!-- ============ AROUND THE WORLD ============ -->
+    <section class="panel stats-card" aria-labelledby="st-atw-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-atw-title">Around the World · hit rate</h3>
+      </div>
+      <div class="empty" id="st-atw-empty" hidden>
+        <span class="empty__title">No Around the World matches yet</span>
+        <span class="empty__body">Finish a race to see your hit rate by match.</span>
+      </div>
+      <div class="stats-card__body" id="st-atw-body" hidden>
+        <dl class="gamefacts">
+          <div><dt>Best</dt><dd id="st-atw-best">—</dd></div>
+          <div><dt>Average</dt><dd id="st-atw-avg">—</dd></div>
+        </dl>
+        <div class="trend" id="st-atw-chart"></div>
+        <p class="trend__hint" id="st-atw-hint" hidden>Hit rate by completion date, oldest to newest.</p>
+      </div>
+    </section>
+
+    <h2 class="stats-group" id="stats-practice-group">Practice</h2>
+
+    <!-- ============ TARGET ============ -->
+    <section class="panel stats-card" aria-labelledby="st-target-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-target-title">Target · hit rate</h3>
+      </div>
+      <div class="empty" id="st-target-empty" hidden>
+        <span class="empty__title">No Target sessions</span>
+        <span class="empty__body">Your hit rates show up here after each target practice finish.</span>
+      </div>
+      <div class="stats-card__body" id="st-target-body" hidden>
+        <dl class="gamefacts">
+          <div><dt>Best</dt><dd id="st-target-best">—</dd></div>
+          <div><dt>Average</dt><dd id="st-target-avg">—</dd></div>
+        </dl>
+        <div class="trend" id="st-target-chart"></div>
+        <p class="trend__hint" id="st-target-hint" hidden>Session hit rate by completion date, oldest to newest.</p>
+      </div>
+    </section>
+
+    <!-- ============ CHECKOUT ============ -->
+    <section class="panel stats-card" aria-labelledby="st-checkout-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-checkout-title">Checkout · clears</h3>
+      </div>
+      <div class="empty" id="st-checkout-empty" hidden>
+        <span class="empty__title">No Checkout sessions</span>
+        <span class="empty__body">Cleared vs stopped counts appear here once you finish checkout practice.</span>
+      </div>
+      <div class="stats-card__body" id="st-checkout-body" hidden>
+        <dl class="gamefacts gamefacts--3">
+          <div><dt>Cleared</dt><dd id="st-co-cleared">—</dd></div>
+          <div><dt>Stopped</dt><dd id="st-co-stopped">—</dd></div>
+          <div><dt>Clear rate</dt><dd id="st-co-rate">—</dd></div>
+        </dl>
+        <dl class="summary" id="st-checkout">
+          <div class="summary__row"><dt>Fastest clear</dt><dd id="st-co-fastest">—</dd></div>
+          <div class="summary__row"><dt>Avg darts on clears</dt><dd id="st-co-avg">—</dd></div>
+        </dl>
+        <div class="trend" id="st-checkout-chart"></div>
+        <p class="trend__hint" id="st-checkout-hint" hidden>Darts used per attempt; amber points stopped short.</p>
+      </div>
+    </section>
+
+    <!-- ============ GAME OF 9 ============ -->
+    <section class="panel stats-card" aria-labelledby="st-g9-title">
+      <div class="panel__head">
+        <h3 class="panel__title" id="st-g9-title">Game of 9 · targets cleared</h3>
+      </div>
+      <div class="empty" id="st-g9-empty" hidden>
+        <span class="empty__title">No Game of 9 sessions</span>
+        <span class="empty__body">Targets cleared and darts used appear here after a session.</span>
+      </div>
+      <div class="stats-card__body" id="st-g9-body" hidden>
+        <dl class="gamefacts gamefacts--3">
+          <div><dt>Sessions</dt><dd id="st-g9-sessions">—</dd></div>
+          <div><dt>Cleared</dt><dd id="st-g9-cleared">—</dd></div>
+          <div><dt>Clear rate</dt><dd id="st-g9-rate">—</dd></div>
+        </dl>
+        <dl class="summary">
+          <div class="summary__row"><dt>Fastest clear</dt><dd id="st-g9-fastest">—</dd></div>
+          <div class="summary__row"><dt>Avg darts</dt><dd id="st-g9-darts">—</dd></div>
+          <div class="summary__row"><dt>Avg targets cleared</dt><dd id="st-g9-targets">—</dd></div>
+        </dl>
+        <div class="trend" id="st-g9-chart"></div>
+        <p class="trend__hint" id="st-g9-hint" hidden>Share of targets cleared; Cricket 7, 501 21.</p>
+      </div>
+    </section>
+
+    <!-- ============ ALL RESULTS ============ -->
+    <section class="panel stats-span" aria-labelledby="st-results-title">
+      <div class="panel__head">
+        <h2 class="panel__title" id="st-results-title">All results</h2>
+      </div>
+      <div class="empty" id="st-results-empty" hidden>
+        <span class="empty__title">Nothing logged yet</span>
+        <span class="empty__body">Finish a match or a practice session and it lands in this list.</span>
+      </div>
+      <div class="tablewrap" id="st-results-wrap">
+        <table class="rtable">
+          <caption class="sr-only">All of your saved match and practice results</caption>
+          <thead>
+            <tr>
+              <th scope="col">When</th>
+              <th scope="col">Type</th>
+              <th scope="col">Matchup</th>
+              <th scope="col">Result</th>
+              <th scope="col" class="ta-right">Key stat</th>
+            </tr>
+          </thead>
+          <tbody id="st-results-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ YOUR PLAYERS ============ -->
+    <section class="panel stats-span" aria-labelledby="roster-title">
+      <div class="panel__head">
+        <h2 class="panel__title" id="roster-title">Your players</h2>
+        <button type="button" class="chip chip--add" id="roster-add">+ Add player</button>
+      </div>
+      <div class="roster" id="roster"></div>
+    </section>
+
+  </div>
+</section>
+
+<!-- ============ PLAY VIEW — practice screens ============ -->
+<section class="play" id="play" hidden aria-labelledby="play-title">
+  <div class="play__head" id="play-head">
+    <div class="play__headin">
+      <button type="button" class="iconbtn" data-play-back aria-label="Back to home">
+        <svg class="od-icon" style="--od-icon-size:1.15rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
+      <div class="play__titles">
+        <h1 class="play__title" id="play-title" tabindex="-1">Practice</h1>
+      </div>
+      <button type="button" class="btn btn--ghost play__finish" data-play-finish>Finish</button>
+    </div>
+  </div>
+  <div class="play__main" id="play-body"></div>
+  <p class="play__note" id="play-note" aria-live="polite"></p>
+  <p class="sr-only" id="play-live" aria-live="polite"></p>
+</section>
+
+<nav class="tabbar" aria-label="Primary">
+  <a class="tab is-active" href="#/" data-nav="play" aria-current="page">
+    <svg class="od-icon" style="--od-icon-size:1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></svg>
+    <span>Play</span>
+  </a>
+  <a class="tab" href="#/practice" data-nav="practice">
+    <svg class="od-icon" style="--od-icon-size:1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="4"/></svg>
+    <span>Practice</span>
+  </a>
+  <a class="tab" href="#/stats" data-nav="stats">
+    <svg class="od-icon" style="--od-icon-size:1.25rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+    <span>Stats</span>
+  </a>
+</nav>
+
+<div class="scrim" id="scrim" hidden></div>
+<div class="app-loading" id="app-loading" hidden>
+  <span class="app-loading__card">
+    <span class="app-loading__spinner" aria-hidden="true"></span>
+    <span class="app-loading__label">Loading…</span>
+  </span>
+</div>
+<div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" hidden>
+  <div class="sheet__grab" aria-hidden="true"></div>
+  <div class="sheet__head">
+    <h2 class="sheet__title" id="sheet-title">Title</h2>
+    <button type="button" class="iconbtn" id="sheet-close" aria-label="Close">
+      <svg class="od-icon" style="--od-icon-size:1.1rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="sheet__body" id="sheet-body"></div>
+</div>
+
+<div class="toaster" id="toaster" role="status" aria-live="polite"></div>
+
+<script>
+  // Register service worker for PWA functionality
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js');
+    });
+  }
+  
+  // Enable fullscreen and wake lock on mobile
+  const enableScreenLock = async () => {
+    try {
+      if ('wakeLock' in navigator) {
+        // Request wake lock to keep screen on during play
+        const wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Wake lock acquired');
+        
+        // Release wake lock when visibility changes (tab becomes inactive)
+        document.addEventListener('visibilitychange', () => {
+          if (wakeLock && document.visibilityState === 'visible') {
+            wakeLock.release();
+          }
+        });
+      }
+      
+      // Request fullscreen on mobile - but only for initial load
+      const requestFullscreen = () => {
+        const element = document.documentElement;
+        if (element.requestFullscreen) {
+          element.requestFullscreen();
+        } else if (element.webkitRequestFullscreen) {
+          element.webkitRequestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+          element.mozRequestFullScreen();
+        } else if (element.msRequestFullscreen) {
+          element.msRequestFullscreen();
+        }
+      };
+      
+      // Check if we're not already in fullscreen and on mobile
+      if (!document.fullscreenElement && 
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        requestFullscreen();
+      }
+    } catch (err) {
+      console.error('Failed to acquire wake lock or request fullscreen:', err);
+    }
+  };
+  
+  // Run on load
+  window.addEventListener('load', enableScreenLock);
+</script>
+<script>window.DARTS_OPPONENT_PROVIDER = "backend";</script>
+<script src="app.js?v=25" defer></script>
+</body>
+</html>

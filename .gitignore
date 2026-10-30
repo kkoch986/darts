@@ -5,6 +5,7 @@ backend/vendor/
 # Build output
 frontend/dist/
 backend/tmp/
+backend/darts-backend
 
 # Database
 *.db
@@ -19,6 +20,7 @@ backend/tmp/
 Thumbs.db
 
 # IDE
+.opencode/
 .vscode/
 .idea/
 *.swp

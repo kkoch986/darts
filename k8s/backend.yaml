@@ -26,8 +26,8 @@ spec:
     spec:
       containers:
         - name: darts-backend
-          image: darts-backend:latest   # Replace with your registry image, e.g. ghcr.io/you/darts-backend:1.0.0
-          imagePullPolicy: IfNotPresent
+          image: docker.io/kkoch986/darts-backend:latest
+          imagePullPolicy: Always
           env:
             - name: DARTS_DB_PATH
               value: /data/darts.db

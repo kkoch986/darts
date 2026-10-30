@@ -95,6 +95,27 @@ func InitDB(path string) {
 			FOREIGN KEY (tournament_id) REFERENCES tournaments(id),
 			FOREIGN KEY (match_id) REFERENCES matches(id)
 		)`,
+		`CREATE TABLE IF NOT EXISTS profiles (
+			id TEXT PRIMARY KEY,
+			user_id TEXT NOT NULL,
+			name TEXT NOT NULL,
+			initials TEXT NOT NULL DEFAULT '',
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		)`,
+		`CREATE INDEX IF NOT EXISTS idx_profiles_user ON profiles(user_id)`,
+		`CREATE TABLE IF NOT EXISTS profile_data (
+			profile_id TEXT NOT NULL,
+			resource TEXT NOT NULL,
+			body TEXT NOT NULL DEFAULT '[]',
+			rev INTEGER NOT NULL DEFAULT 0,
+			updated_at INTEGER NOT NULL,
+			PRIMARY KEY (profile_id, resource)
+		)`,
+		`CREATE TABLE IF NOT EXISTS profile_state (
+			user_id TEXT PRIMARY KEY,
+			active_id TEXT NOT NULL DEFAULT ''
+		)`,
 	}
 
 	for _, m := range migrations {

@@ -1,18 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Build stage
-FROM node:22-alpine AS builder
-WORKDIR /src
-
-# Cache dependencies
-COPY package.json package-lock.json ./
-RUN npm ci
-
-# Build static assets
-COPY . .
-RUN npm run build
-
-# Run stage: nginx serves static SPA and proxies /api to the backend
+# Serve the vanilla-JS Darts UI (frontend/static) and proxy /api to the backend.
+# The static app has no build step; nginx serves the files directly.
 FROM nginx:1.27-alpine
 
 # Backend service hostname (kubernetes service or docker-compose service name).
@@ -20,8 +9,14 @@ FROM nginx:1.27-alpine
 ARG DARTS_BACKEND_HOST=backend
 ENV DARTS_BACKEND_HOST=${DARTS_BACKEND_HOST}
 
-# Substitute the backend host, then copy as default.conf
+# nginx substitutes ${DARTS_BACKEND_HOST} in the template at container start.
 COPY nginx.conf /etc/nginx/templates/default.conf.template
-COPY --from=builder /src/dist /usr/share/nginx/html
+
+# New UI assets: index.html, app.js, styles.css
+COPY static/ /usr/share/nginx/html/
+
+# Copy PWA assets for installability
+COPY static/manifest.json /usr/share/nginx/html/
+COPY static/sw.js /usr/share/nginx/html/
 
 EXPOSE 80

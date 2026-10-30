@@ -427,16 +427,16 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	type matchSummary struct {
-		ID            string            `json:"id"`
-		Type          string            `json:"type"`
-		StartingScore int               `json:"starting_score,omitempty"`
-		TotalGames    int               `json:"total_games"`
-		Status        string            `json:"status"`
-		CreatedAt     string            `json:"created_at"`
-		WinnerName    *string           `json:"winner_name,omitempty"`
-		Players       []string          `json:"players"`
-		PlayerIDs     []string          `json:"player_ids"`
-		GameScores    map[string]int    `json:"game_scores,omitempty"`
+		ID            string         `json:"id"`
+		Type          string         `json:"type"`
+		StartingScore int            `json:"starting_score,omitempty"`
+		TotalGames    int            `json:"total_games"`
+		Status        string         `json:"status"`
+		CreatedAt     string         `json:"created_at"`
+		WinnerName    *string        `json:"winner_name,omitempty"`
+		Players       []string       `json:"players"`
+		PlayerIDs     []string       `json:"player_ids"`
+		GameScores    map[string]int `json:"game_scores,omitempty"`
 	}
 
 	var summaries []matchSummary

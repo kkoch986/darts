@@ -24,8 +24,8 @@ spec:
         - name: darts-frontend
           # The nginx image uses envsubst at startup to proxy /api to this
           # backend hostname. Point DARTS_BACKEND_HOST at the backend Service.
-          image: darts-frontend:latest   # Replace with your registry image, e.g. ghcr.io/you/darts-frontend:1.0.0
-          imagePullPolicy: IfNotPresent
+          image: docker.io/kkoch986/darts-frontend:latest
+          imagePullPolicy: Always
           env:
             - name: DARTS_BACKEND_HOST
               value: darts-backend
