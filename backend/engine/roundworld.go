@@ -8,7 +8,10 @@ import (
 )
 
 // RoundWorldNumbers represents the sequence of numbers in Round World
-var RoundWorldNumbers = []int{20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5}
+// Standard Round World goes: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, Bullseye
+// But typically it's played as: 20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5
+// However, for a "sequence in numerical order" as you mentioned, it would be: 1,2,3,...,20,Bullseye
+var RoundWorldNumbers = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25} // 25 represents bullseye
 
 type RoundWorldPlayer struct {
 	ID         string        `json:"id"`
@@ -91,7 +94,7 @@ func (g *RoundWorldGameState) Throw(seg Segment) error {
 		case OuterBull:
 			points = 1 // Usually 1 point for outer bull
 		case Bullseye:
-			points = 5 // Usually 5 points for bullseye
+			points = 5 // Usually 5 points for bullseye (represented as 25)
 		}
 		
 		// Record the hit in history
