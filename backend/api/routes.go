@@ -5,83 +5,69 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 
 	"github.com/ken/darts-backend/handlers"
 )
 
-func Setup() http.Handler {
+func Routes() http.Handler {
 	r := chi.NewRouter()
 
+	// Middleware
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(corsMiddleware)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"https://*", "http://*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+	}))
 
+	// API Routes
 	r.Route("/api", func(r chi.Router) {
+		// Games routes
 		r.Route("/games", func(r chi.Router) {
 			r.Post("/", handlers.CreateGame)
-			r.Get("/", handlers.ListGames)
-			r.Get("/active", handlers.ListActiveGames)
-			r.Get("/history", handlers.ListGamesWithDetails)
 			r.Get("/{id}", handlers.GetGame)
-			r.Delete("/{id}", handlers.DeleteGame)
 			r.Post("/{id}/throw", handlers.Throw)
 			r.Post("/{id}/end-turn", handlers.EndTurn)
 			r.Post("/{id}/undo", handlers.UndoLastThrow)
+			
+			// Round World specific routes
+			r.Post("/round-world", handlers.CreateRoundWorldGame)
+			r.Get("/round-world/{id}", handlers.GetRoundWorldGame)
+			r.Post("/round-world/{id}/throw", handlers.RoundWorldThrow)
+			r.Post("/round-world/{id}/end-turn", handlers.EndRoundWorldTurn)
+			r.Post("/round-world/{id}/undo", handlers.UndoLastRoundWorldThrow)
 		})
 
-		r.Route("/players", func(r chi.Router) {
-			r.Post("/", handlers.CreatePlayer)
-			r.Get("/", handlers.ListPlayers)
-			r.Delete("/{id}", handlers.DeletePlayer)
-			r.Delete("/{id}/stats", handlers.ResetPlayerStats)
-		})
-
-		r.Route("/stats", func(r chi.Router) {
-			r.Get("/player/{id}", handlers.GetPlayerStats)
-			r.Get("/player/{id}/heatmap", handlers.GetPlayerHeatmap)
-			r.Get("/player/{id}/difficulty", handlers.GetPlayerDifficultyStats)
-			r.Get("/player/{id}/mpr", handlers.GetPlayerLifetimeMPR)
-			r.Get("/player/{id}/wins", handlers.GetPlayerWinsMatrix)
-			r.Get("/player/{id}/timeline", handlers.GetPlayerTimeline)
-		})
-
+		// Matches routes
 		r.Route("/matches", func(r chi.Router) {
-			r.Post("/", handlers.CreateMatch)
-			r.Get("/", handlers.ListMatches)
-			r.Get("/{id}", handlers.GetMatchState)
-			r.Get("/{id}/stats", handlers.GetMatchStats)
-			r.Post("/{id}/throw", handlers.ThrowInMatch)
-			r.Post("/{id}/end-turn", handlers.EndTurnInMatch)
-			r.Post("/{id}/undo", handlers.UndoInMatch)
-			r.Delete("/{id}", handlers.DeleteMatch)
+			r.Get("/{id}", handlers.GetMatch)
+			r.Post("/{id}/next-game", handlers.CreateNextMatchGame)
 		})
 
+		// Players routes
+		r.Route("/players", func(r chi.Router) {
+			r.Get("/", handlers.ListPlayers)
+			r.Post("/", handlers.CreatePlayer)
+			r.Get("/{id}", handlers.GetPlayer)
+		})
+
+		// Stats routes
+		r.Route("/stats", func(r chi.Router) {
+			r.Get("/players/{id}", handlers.GetPlayerStats)
+			r.Get("/games", handlers.ListGamesWithDetails)
+		})
+
+		// Practice routes
 		r.Route("/practice", func(r chi.Router) {
 			r.Post("/checkout", handlers.StartCheckoutPractice)
 			r.Post("/checkout/{id}/throw", handlers.CheckoutPracticeThrow)
 		})
-
-		r.Route("/tournaments", func(r chi.Router) {
-			r.Post("/", handlers.CreateTournament)
-			r.Get("/", handlers.ListTournaments)
-			r.Get("/{id}", handlers.GetTournament)
-		})
 	})
 
 	return r
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
 }

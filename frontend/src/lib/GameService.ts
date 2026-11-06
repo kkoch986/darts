@@ -17,7 +17,7 @@ export class GameService {
    * @returns Promise with created game details
    */
   async createGame(gameConfig: {
-    type: 'x01' | 'cricket';
+    type: 'x01' | 'cricket' | 'round_world';
     startingScore?: number;
     players: Array<{
       name: string;
@@ -42,6 +42,34 @@ export class GameService {
   }
 
   /**
+   * Create a new round world game
+   * @param gameConfig Configuration for the new round world game
+   * @returns Promise with created game details
+   */
+  async createRoundWorldGame(gameConfig: {
+    players: Array<{
+      name: string;
+      isBot: boolean;
+      difficulty?: string;
+    }>;
+    matchLength?: number;
+  }): Promise<GameResponse> {
+    const response = await fetch(`${this.baseUrl}/games/round-world`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(gameConfig),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create round world game: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Get current game state
    * @param gameId ID of the game to retrieve
    * @returns Promise with current game state
@@ -56,6 +84,26 @@ export class GameService {
 
     if (!response.ok) {
       throw new Error(`Failed to get game: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Get current round world game state
+   * @param gameId ID of the round world game to retrieve
+   * @returns Promise with current game state
+   */
+  async getRoundWorldGame(gameId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/games/round-world/${gameId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to get round world game: ${response.statusText}`);
     }
 
     return response.json();
@@ -84,6 +132,28 @@ export class GameService {
   }
 
   /**
+   * Record a throw in a round world game
+   * @param gameId ID of the round world game
+   * @param segment Segment that was thrown
+   * @returns Promise with updated game state and any AI turns
+   */
+  async recordRoundWorldThrow(gameId: string, segment: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/games/round-world/${gameId}/throw`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ segment }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to record round world throw: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * End the current turn
    * @param gameId ID of the game
    * @returns Promise with updated game state and any AI turns
@@ -104,6 +174,26 @@ export class GameService {
   }
 
   /**
+   * End the current round world turn
+   * @param gameId ID of the round world game
+   * @returns Promise with updated game state and any AI turns
+   */
+  async endRoundWorldTurn(gameId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/games/round-world/${gameId}/end-turn`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to end round world turn: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
    * Undo the last throw
    * @param gameId ID of the game
    * @returns Promise with updated game state
@@ -118,6 +208,26 @@ export class GameService {
 
     if (!response.ok) {
       throw new Error(`Failed to undo throw: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
+  /**
+   * Undo the last round world throw
+   * @param gameId ID of the round world game
+   * @returns Promise with updated game state
+   */
+  async undoLastRoundWorldThrow(gameId: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/games/round-world/${gameId}/undo`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to undo round world throw: ${response.statusText}`);
     }
 
     return response.json();
