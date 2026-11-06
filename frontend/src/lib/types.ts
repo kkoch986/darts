@@ -1,54 +1,18 @@
-export type GameType = 'x01' | 'cricket';
-export type Persona = 'rookie' | 'jester' | 'steady' | 'finisher' | 'bully' | 'sniper';
+/**
+ * Game types and interfaces
+ */
 
-export interface PersonaInfo {
-  id: Persona;
-  label: string;
-  rank: number;
-  description: string;
-}
-
-export const PERSONAS: PersonaInfo[] = [
-  { id: 'rookie', label: 'Rookie', rank: 1, description: 'Safe singles, low accuracy' },
-  { id: 'jester', label: 'Jester', rank: 1, description: 'Wild targets, high variance' },
-  { id: 'steady', label: 'Steady', rank: 2, description: 'Balanced, closes methodically' },
-  { id: 'finisher', label: 'Finisher', rank: 3, description: 'Strong checkout game' },
-  { id: 'bully', label: 'Bully', rank: 4, description: 'Aggressive triples, closes fast' },
-  { id: 'sniper', label: 'Sniper', rank: 5, description: 'T20 focused, pinpoint accuracy' },
-];
-
-export interface Segment {
-  type: 0 | 1 | 2 | 3 | 4; // single=0, double=1, triple=2, outer_bull=3, bullseye=4
-  value: number;
-  multiplier: number;
-  raw_label?: string;
-}
-
-export interface X01Player {
+export interface Player {
   id: string;
   name: string;
-  is_bot: boolean;
-  difficulty?: Persona;
+  isBot: boolean;
+  difficulty?: string;
   score: number;
-  score_at_turn_start: number;
-  darts_used: number;
-  turn_score: number;
-  turn_darts: ThrowRecord[];
+  dartsUsed: number;
+  turnScore: number;
   history: ThrowRecord[];
-  darts_thrown: number;
-  total_score: number;
-}
-
-export interface CricketPlayer {
-  id: string;
-  name: string;
-  is_bot: boolean;
-  difficulty?: Persona;
-  marks: Record<number, number>;
-  score: number;
-  darts_used: number;
-  turn_darts: ThrowRecord[];
-  history: ThrowRecord[];
+  turnDarts: ThrowRecord[];
+  busted: boolean;
 }
 
 export interface ThrowRecord {
@@ -56,158 +20,50 @@ export interface ThrowRecord {
   label: string;
   score: number;
   round: number;
-  dart_num: number;
+  dartNum: number;
   timestamp: string;
   busted?: boolean;
-  extra_score?: number;
+  extraScore?: number;
 }
 
-export interface X01GameState {
+export interface Segment {
+  type: 'single' | 'double' | 'triple' | 'outer_bull' | 'bullseye';
+  value: number;
+  multiplier: number;
+  rawLabel?: string;
+}
+
+export interface GameState {
   id: string;
-  type: 'x01';
-  starting_score: number;
-  players: X01Player[];
-  current_player: number;
+  type: 'x01' | 'cricket';
+  startingScore?: number;
+  players: Player[];
+  currentPlayer: number;
   round: number;
-  is_over: boolean;
-  winner?: X01Player;
-  stats: Record<string, GameStats>;
+  isOver: boolean;
+  winner?: Player;
+  createdAt: string;
+  stats?: Record<string, any>;
 }
 
-export interface CricketGameState {
-  id: string;
-  type: 'cricket';
-  players: CricketPlayer[];
-  current_player: number;
-  round: number;
-  is_over: boolean;
-  winner?: CricketPlayer;
-  stats: Record<string, GameStats>;
+export interface GameResponse {
+  gameId: string;
+  type: 'x01' | 'cricket';
+  state: GameState;
+  match?: any;
 }
 
-export type GameState = X01GameState | CricketGameState;
-
-export interface MatchPlayer {
-  id: string;
-  name: string;
-  is_bot: boolean;
-  difficulty?: Persona;
+export interface CreateGameRequest {
+  type: 'x01' | 'cricket';
+  startingScore?: number;
+  players: Array<{
+    name: string;
+    isBot: boolean;
+    difficulty?: string;
+  }>;
+  matchLength?: number;
 }
 
-export interface MatchLegResult {
-  game_id: string;
-  winner_id: string;
-  index: number;
-}
-
-export interface MatchState {
-  id: string;
-  type: GameType;
-  starting_score?: number;
-  total_games: number;
-  status: 'active' | 'completed';
-  winner_id?: string;
-  players: MatchPlayer[];
-  current_game_index: number;
-  current_game_state: GameState;
-  game_scores: Record<string, number>;
-  games_played: number;
-  first_thrower_index: number;
-  leg_history: MatchLegResult[];
-  created_at: string;
-}
-
-export interface GameStats {
-  throw_count: number;
-  turn_count: number;
-  segment_hits: Record<string, number>;
-  type_hits: Record<string, number>;
-  total_score: number;
-  turn_averages: number[];
-  high_turn: number;
-}
-
-export interface Player {
-  id: string;
-  name: string;
-  created_at?: string;
-}
-
-export interface LifetimeStats {
-  player_id: string;
-  games_played: number;
-  games_won: number;
-  total_throws: number;
-  total_rounds: number;
-  avg_rounds_per_game: number;
-  avg_darts_per_game: number;
-  segment_hits: Record<string, number>;
-  heatmap_data?: Record<string, number>;
-}
-
-export interface AiThrowResult {
-  player_id: string;
-  name: string;
+export interface ThrowRequest {
   segment: string;
-  score: number;
-  points: number;
-  error?: string;
 }
-
-export interface TournamentPlayer {
-  id: string;
-  name: string;
-  is_bot: boolean;
-  difficulty?: Persona;
-  seed?: number;
-}
-
-export interface BracketSlot {
-  id: string;
-  round: number;
-  position: number;
-  phase?: 'wb' | 'lb' | 'gf' | 'rr';
-  player1?: TournamentPlayer;
-  player2?: TournamentPlayer;
-  winner?: TournamentPlayer;
-  match_id?: string;
-  next_slot?: string;
-  loser_slot?: string;
-  reset_slot?: string;
-  status: 'pending' | 'active' | 'completed';
-}
-
-export interface TournamentStanding {
-  player: TournamentPlayer;
-  wins: number;
-  losses: number;
-}
-
-export interface Tournament {
-  id: string;
-  name: string;
-  type: 'single_elimination' | 'round_robin' | 'double_elimination';
-  game_type: GameType;
-  starting_score?: number;
-  match_length: number;
-  status: 'active' | 'completed';
-  players: TournamentPlayer[];
-  bracket: BracketSlot[];
-  standings?: TournamentStanding[];
-  winner?: TournamentPlayer;
-  created_at: string;
-}
-
-export interface ThrowResponse {
-  state: GameState;
-  error?: string;
-  ai_throw?: AiThrowResult;
-}
-
-export interface EndTurnResponse {
-  state: GameState;
-  ai_turns?: AiThrowResult[];
-}
-
-export const CRICKET_NUMBERS = [20, 19, 18, 17, 16, 15, 25] as const;
-export const BOARD_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5] as const;
