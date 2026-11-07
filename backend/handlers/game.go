@@ -474,7 +474,7 @@ func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 	var openTargets []int
 	for _, n := range engine.CricketNumbers {
 		for _, opp := range g.Players {
-			if opp.ID != p.ID && opp.Marks[n] < 3 {
+			if opp.ID != p.ID && opp.Mark[n] < 3 {
 				openTargets = append(openTargets, n)
 				break
 			}
@@ -484,7 +484,7 @@ func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 	var oppMarks []map[int]int
 	for _, opp := range g.Players {
 		if opp.ID != p.ID {
-			oppMarks = append(oppMarks, opp.Marks)
+			oppMarks = append(oppMarks, opp.Mark)
 		}
 	}
 
@@ -499,13 +499,13 @@ func playBotTurnsCricket(g *engine.CricketGameState) []*AiThrowResult {
 				oppScores = append(oppScores, opp.Score)
 			}
 		}
-		botRes := opp.ThrowCricket(openTargets, p.Marks, oppMarks, p.Score, oppScores)
+		botRes := opp.ThrowCricket(openTargets, p.Mark, oppMarks, p.Score, oppScores)
 		scoreBefore := p.Score
 		err := g.Throw(botRes.Segment)
 		points := p.Score - scoreBefore
 
 		log.Printf("[AI cricket] player=%s aim=%s hit=%s openTargets=%v ownMarks=%+v",
-			p.Name, botRes.AimLabel, engine.SegmentLabel(botRes.Segment), openTargets, p.Marks)
+			p.Name, botRes.AimLabel, engine.SegmentLabel(botRes.Segment), openTargets, p.Mark)
 
 		results = append(results, &AiThrowResult{
 			PlayerID: p.ID,

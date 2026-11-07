@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"math"
 )
 
 type SegmentType int
@@ -102,49 +101,3 @@ func IsCricketNumber(val int) bool {
 	return false
 }
 
-type ThrowRecord struct {
-	Segment     Segment `json:"segment"`
-	Label       string  `json:"label"`
-	Score       int     `json:"score"`
-	Round       int     `json:"round"`
-	DartNum     int     `json:"dart_num"`
-	ExtraScore  int     `json:"extra_score,omitempty"`
-}
-
-type GameStats struct {
-	TotalScore   int            `json:"total_score"`
-	ThrowCount   int            `json:"throw_count"`
-	RowCount     int            `json:"row_count"`
-	SegmentHits  map[string]int `json:"segment_hits"`
-	TypeHits     map[string]int `json:"type_hits"`
-}
-
-func NewGameStats() *GameStats {
-	return &GameStats{
-		TotalScore:  0,
-		ThrowCount:  0,
-		RowCount:    0,
-		SegmentHits: make(map[string]int),
-		TypeHits:    make(map[string]int),
-	}
-}
-
-func (gs *GameStats) RecordThrow(record ThrowRecord) {
-	gs.ThrowCount++
-	gs.TotalScore += record.Score
-	if record.Label != "" {
-		gs.SegmentHits[record.Label]++
-	}
-	typeName := record.Segment.Type.String()
-	gs.TypeHits[typeName]++
-	if record.DartNum == 1 {
-		gs.RowCount++
-	}
-}
-
-func (gs *GameStats) Accuracy() float64 {
-	if gs.ThrowCount == 0 {
-		return 0.0
-	}
-	return math.Round(float64(gs.ThrowCount-gs.SegmentHits[""]) / float64(gs.ThrowCount) * 100)
-}

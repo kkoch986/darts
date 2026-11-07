@@ -20,10 +20,10 @@ func makeTestCricketGame(numPlayers int) *CricketGameState {
 func TestCricket_InitialState(t *testing.T) {
 	g := makeTestCricketGame(2)
 	for _, n := range CricketNumbers {
-		if g.Players[0].Marks[n] != 0 {
-			t.Fatalf("expected 0 marks for %d, got %d", n, g.Players[0].Marks[n])
+		if g.Players[0].Mark[n] != 0 {
+			t.Fatalf("expected 0 marks for %d, got %d", n, g.Players[0].Mark[n])
 		}
-		if g.Players[0].Opens[n] {
+		if g.Players[0].Open[n] {
 			t.Fatalf("expected %d not open", n)
 		}
 	}
