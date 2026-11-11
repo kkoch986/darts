@@ -343,3 +343,14 @@ func (g *CricketGameState) RecomputeScores() {
 		p.Open = opens[p.ID]
 	}
 }
+
+// MarksForSegment returns how many marks a segment gives in cricket.
+func MarksForSegment(seg Segment) int {
+	if seg.Value == 25 && seg.Type == OuterBull {
+		return 1
+	}
+	if seg.Value == 25 && seg.Type == Bullseye {
+		return 2
+	}
+	return seg.Multiplier
+}

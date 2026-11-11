@@ -806,7 +806,7 @@ func computeMatchStats(match *engine.MatchState) matchStats {
 			legDarts[p.ID] = append(legDarts[p.ID], p.DartsUsed)
 			marks := 0
 			for _, n := range engine.CricketNumbers {
-				marks += p.Marks[n]
+				marks += p.Mark[n]
 			}
 			legMarks[p.ID] = append(legMarks[p.ID], marks)
 		}

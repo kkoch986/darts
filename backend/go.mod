@@ -5,7 +5,6 @@ go 1.26.0
 require (
 	github.com/go-chi/chi/v5 v5.5.0
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/mux v1.8.0
 	modernc.org/sqlite v1.61.0
 )
 
