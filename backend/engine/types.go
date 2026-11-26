@@ -34,10 +34,10 @@ func (t SegmentType) String() string {
 }
 
 type Segment struct {
-	Type      SegmentType `json:"type"`
-	Value     int         `json:"value"`
-	Multiplier int        `json:"multiplier"`
-	RawLabel  string      `json:"raw_label,omitempty"`
+	Type       SegmentType `json:"type"`
+	Value      int         `json:"value"`
+	Multiplier int         `json:"multiplier"`
+	RawLabel   string      `json:"raw_label,omitempty"`
 }
 
 func (s Segment) String() string {
@@ -125,14 +125,26 @@ func ParseSegment(label string) (Segment, error) {
 		seg.Value = 25
 		seg.Multiplier = 2
 		return seg, nil
+	case "SB":
+		seg.Type = OuterBull
+		seg.Value = 25
+		seg.Multiplier = 1
+		return seg, nil
+	case "DB":
+		seg.Type = Bullseye
+		seg.Value = 25
+		seg.Multiplier = 2
+		return seg, nil
 	}
 
-	// Check for multipliers (D or T)
+	// Check for multipliers (D, T or an explicit S for a single)
 	if strings.HasPrefix(label, "D") {
 		multiplier = 2
 		label = label[1:]
 	} else if strings.HasPrefix(label, "T") {
 		multiplier = 3
+		label = label[1:]
+	} else if strings.HasPrefix(label, "S") {
 		label = label[1:]
 	}
 

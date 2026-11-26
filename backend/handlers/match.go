@@ -642,7 +642,7 @@ func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameS
 	var openTargets []int
 	for _, n := range engine.CricketNumbers {
 		for _, oppP := range g.Players {
-			if oppP.ID != p.ID && oppP.Mark[n] < 3 {
+			if oppP.ID != p.ID && oppP.Marks[n] < 3 {
 				openTargets = append(openTargets, n)
 				break
 			}
@@ -652,7 +652,7 @@ func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameS
 	var oppMarks []map[int]int
 	for _, oppP := range g.Players {
 		if oppP.ID != p.ID {
-			oppMarks = append(oppMarks, oppP.Mark)
+			oppMarks = append(oppMarks, oppP.Marks)
 		}
 	}
 
@@ -668,7 +668,7 @@ func playBotTurnsCricketInMatch(match *engine.MatchState, g *engine.CricketGameS
 		if g.IsOver {
 			break
 		}
-		botRes := opp.ThrowCricket(openTargets, p.Mark, oppMarks, p.Score, oppScores)
+		botRes := opp.ThrowCricket(openTargets, p.Marks, oppMarks, p.Score, oppScores)
 		scoreBefore := p.Score
 		g.Throw(botRes.Segment)
 		recordThrow(match, engine.SegmentLabel(botRes.Segment), engine.SegmentScore(botRes.Segment))
@@ -806,7 +806,7 @@ func computeMatchStats(match *engine.MatchState) matchStats {
 			legDarts[p.ID] = append(legDarts[p.ID], p.DartsUsed)
 			marks := 0
 			for _, n := range engine.CricketNumbers {
-				marks += p.Mark[n]
+				marks += p.Marks[n]
 			}
 			legMarks[p.ID] = append(legMarks[p.ID], marks)
 		}

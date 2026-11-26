@@ -14,12 +14,12 @@ type CricketPlayer struct {
 	Name       string        `json:"name"`
 	IsBot      bool          `json:"is_bot"`
 	Difficulty string        `json:"difficulty,omitempty"`
-	Mark       map[int]int   `json:"marks"`
+	Marks      map[int]int   `json:"marks"`
 	Score      int           `json:"score"`
 	DartsUsed  int           `json:"darts_used"`
 	TurnDarts  []ThrowRecord `json:"turn_darts"`
 	History    []ThrowRecord `json:"history"`
-	Open       map[int]bool  `json:"opens"`
+	Opens      map[int]bool  `json:"opens"`
 }
 
 type CricketGameState struct {
@@ -37,11 +37,11 @@ type CricketGameState struct {
 func NewCricketGame(players []*CricketPlayer) *CricketGameState {
 	stats := make(map[string]*GameStats)
 	for _, p := range players {
-		p.Mark = make(map[int]int)
-		p.Open = make(map[int]bool)
+		p.Marks = make(map[int]int)
+		p.Opens = make(map[int]bool)
 		for _, n := range CricketNumbers {
-			p.Mark[n] = 0
-			p.Open[n] = false
+			p.Marks[n] = 0
+			p.Opens[n] = false
 		}
 		stats[p.ID] = NewGameStats()
 	}
@@ -100,13 +100,13 @@ func (g *CricketGameState) Throw(seg Segment) error {
 	}
 
 	// Was this number already closed before this throw?
-	alreadyOpen := p.Open[val]
-	marksBefore := p.Mark[val]
+	alreadyOpen := p.Opens[val]
+	marksBefore := p.Marks[val]
 
-	p.Mark[val] += marks
+	p.Marks[val] += marks
 
-	if p.Mark[val] >= 3 {
-		p.Open[val] = true
+	if p.Marks[val] >= 3 {
+		p.Opens[val] = true
 	}
 
 	if alreadyOpen {
@@ -115,20 +115,20 @@ func (g *CricketGameState) Throw(seg Segment) error {
 			if opp.ID == p.ID {
 				continue
 			}
-			if opp.Mark[val] < 3 {
+			if opp.Marks[val] < 3 {
 				p.Score += score
 				record.ExtraScore += score
 			}
 		}
-	} else if marksBefore < 3 && p.Mark[val] >= 3 {
+	} else if marksBefore < 3 && p.Marks[val] >= 3 {
 		// This throw closes the number: extra marks beyond 3 convert to points
-		extraMarks := p.Mark[val] - 3
+		extraMarks := p.Marks[val] - 3
 		for i := 0; i < extraMarks; i++ {
 			for _, opp := range g.Players {
 				if opp.ID == p.ID {
 					continue
 				}
-				if opp.Mark[val] < 3 {
+				if opp.Marks[val] < 3 {
 					p.Score += val
 					record.ExtraScore += val
 				}
@@ -145,7 +145,7 @@ func (g *CricketGameState) checkWin() {
 	for _, p := range g.Players {
 		allClosed := true
 		for _, n := range CricketNumbers {
-			if p.Mark[n] < 3 {
+			if p.Marks[n] < 3 {
 				allClosed = false
 				break
 			}
@@ -196,12 +196,12 @@ func (g *CricketGameState) UndoLastThrow() error {
 	if val == 25 && last.Segment.Type == Bullseye {
 		marks = 2
 	}
-	p.Mark[val] -= marks
-	if p.Mark[val] < 0 {
-		p.Mark[val] = 0
+	p.Marks[val] -= marks
+	if p.Marks[val] < 0 {
+		p.Marks[val] = 0
 	}
-	if p.Mark[val] < 3 {
-		p.Open[val] = false
+	if p.Marks[val] < 3 {
+		p.Opens[val] = false
 	}
 
 	// Revert score unconditionally if points were scored
@@ -339,8 +339,8 @@ func (g *CricketGameState) RecomputeScores() {
 
 	for _, p := range g.Players {
 		p.Score = scores[p.ID]
-		p.Mark = marks[p.ID]
-		p.Open = opens[p.ID]
+		p.Marks = marks[p.ID]
+		p.Opens = opens[p.ID]
 	}
 }
 
