@@ -32,6 +32,7 @@ type CricketGameState struct {
 	Winner        *CricketPlayer        `json:"winner,omitempty"`
 	CreatedAt     time.Time             `json:"created_at"`
 	Stats         map[string]*GameStats `json:"stats"`
+	Advice        *Advice               `json:"advice,omitempty"`
 }
 
 func NewCricketGame(players []*CricketPlayer) *CricketGameState {

@@ -19,7 +19,14 @@ var (
 	gameMu      sync.RWMutex
 )
 
+// refreshGameAdvice recomputes engine-generated strategy advice for a game
+// state in place, so persisted and hydrated states always carry fresh advice.
+func refreshGameAdvice(state interface{}) {
+	engine.RefreshAdvice(state)
+}
+
 func persistGameState(gameID string, state interface{}) {
+	refreshGameAdvice(state)
 	stateJSON, err := json.Marshal(state)
 	if err != nil {
 		return
@@ -702,11 +709,13 @@ func hydrateGameState(gameID string, raw interface{}) interface{} {
 	case "x01":
 		var g engine.X01GameState
 		if err := json.Unmarshal(reJSON, &g); err == nil {
+			refreshGameAdvice(&g)
 			return &g
 		}
 	case "cricket":
 		var g engine.CricketGameState
 		if err := json.Unmarshal(reJSON, &g); err == nil {
+			refreshGameAdvice(&g)
 			return &g
 		}
 	}

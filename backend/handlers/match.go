@@ -492,6 +492,7 @@ func ListMatches(w http.ResponseWriter, r *http.Request) {
 // --- helpers ---
 
 func persistMatchState(match *engine.MatchState) {
+	refreshGameAdvice(match.CurrentGameState)
 	stateJSON, err := json.Marshal(match)
 	if err != nil {
 		return
@@ -500,6 +501,7 @@ func persistMatchState(match *engine.MatchState) {
 }
 
 func persistCurrentLeg(match *engine.MatchState) {
+	refreshGameAdvice(match.CurrentGameState)
 	var gameID string
 	var stateJSON string
 	switch g := match.CurrentGameState.(type) {
@@ -709,11 +711,13 @@ func loadMatchFromDB(id string) (*engine.MatchState, error) {
 			var g engine.X01GameState
 			if err := json.Unmarshal(cs, &g); err == nil {
 				match.CurrentGameState = &g
+				refreshGameAdvice(&g)
 			}
 		case "cricket":
 			var g engine.CricketGameState
 			if err := json.Unmarshal(cs, &g); err == nil {
 				match.CurrentGameState = &g
+				refreshGameAdvice(&g)
 			}
 		}
 	}

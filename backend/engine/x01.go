@@ -39,6 +39,7 @@ type X01GameState struct {
 	Winner        *X01Player            `json:"winner,omitempty"`
 	CreatedAt     time.Time             `json:"created_at"`
 	Stats         map[string]*GameStats `json:"stats"`
+	Advice        *Advice               `json:"advice,omitempty"`
 }
 
 type ThrowRecord struct {
